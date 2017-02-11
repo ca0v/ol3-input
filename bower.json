@@ -1,0 +1,42 @@
+{
+  "name": "ol3-input",
+  "description": "Input control for OpenLayers 3",
+  "homepage": "https://github.com/ca0v/ol3-input",
+  "main": [
+    "ol3-input.ts",
+    "built/index.js"
+  ],
+  "devDependencies": {
+    "ol3-symbolizer": "git://github.com/ca0v/ol3-symbolizer.git#v3.20.1"
+  },
+  "dependencies": {
+    "openlayers": "https://github.com/openlayers/ol3/releases/download/v3.20.1/v3.20.1-dist.zip",
+    "requirejs": "^2.2.0"
+  },
+  "moduleType": [
+    "amd"
+  ],
+  "keywords": [
+    "openlayers",
+    "input",
+    "control"
+  ],
+  "authors": [
+    "Corey Alix <coreyalix@outlook.com>"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "bower_components",
+    "typings",
+    "ol3-input/examples/**",
+    "*.html",
+    "*.md",
+    "*.yml"
+  ],
+  "private": true,
+  "typescript": {
+    "definition": "built/index.d.ts"
+  },
+  "version": "3.20.1"
+}
