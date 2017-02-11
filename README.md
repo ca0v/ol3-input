@@ -1,5 +1,5 @@
-# OpenLayers 3 Popup
-Adds paging to [ol3-popup](https://github.com/ca0v/ol3-input).
+# OpenLayers 3 Input
+* [ol3-input](https://github.com/ca0v/ol3-input).
 
 ## Examples
 
