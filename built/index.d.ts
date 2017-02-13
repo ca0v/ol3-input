@@ -5,6 +5,11 @@ declare module "ol3-input/ol3-input" {
     export interface IOptions {
         className?: string;
         expanded?: boolean;
+        hideButton?: boolean;
+        autoClear?: boolean;
+        autoCollapse?: boolean;
+        autoSelect?: boolean;
+        canCollapse?: boolean;
         closedText?: string;
         openedText?: string;
         source?: HTMLElement;
@@ -22,7 +27,6 @@ declare module "ol3-input/ol3-input" {
             element: HTMLElement;
             target: HTMLElement;
         });
-        dispose(): void;
         collapse(options: IOptions): void;
         expand(options: IOptions): void;
     }

@@ -78,8 +78,13 @@ export function run() {
 
     map.addControl(Input.create({
         className: 'ol-input top right',
-        expanded: false,
+        expanded: true,
+        openedText: "?",
         placeholderText: "Top Right",
+        autoClear: true,
+        autoCollapse: false,
+        canCollapse: false,
+        hideButton: true,
         onChange: changeHandler
     }));
 
