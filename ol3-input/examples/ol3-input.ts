@@ -70,7 +70,7 @@ export function run() {
     map.addControl(geocoder);
 
     map.addControl(Input.create({
-        className: 'ol-input bottom right',
+        className: 'ol-input bottom-2 right',
         expanded: true,
         placeholderText: "Bottom Right Search",
         onChange: changeHandler
@@ -84,7 +84,7 @@ export function run() {
     }));
 
     map.addControl(Input.create({
-        className: 'ol-input top left',
+        className: 'ol-input top-4 left',
         expanded: false,
         placeholderText: "Top Left Search",
         onChange: changeHandler

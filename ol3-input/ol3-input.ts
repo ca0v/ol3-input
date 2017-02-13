@@ -36,17 +36,62 @@ const css = `
     .ol-input.top {
         top: 0.5em;
     }
+    .ol-input.top-1 {
+        top: 1.5em;
+    }
+    .ol-input.top-2 {
+        top: 2.5em;
+    }
+    .ol-input.top-3 {
+        top: 3.5em;
+    }
+    .ol-input.top-4 {
+        top: 4.5em;
+    }
     .ol-input.left {
         left: 0.5em;
+    }
+    .ol-input.left-1 {
+        left: 1.5em;
+    }
+    .ol-input.left-2 {
+        left: 2.5em;
+    }
+    .ol-input.left-3 {
+        left: 3.5em;
+    }
+    .ol-input.left-4 {
+        left: 4.5em;
     }
     .ol-input.bottom {
         bottom: 0.5em;
     }
+    .ol-input.bottom-1 {
+        bottom: 1.5em;
+    }
+    .ol-input.bottom-2 {
+        bottom: 2.5em;
+    }
+    .ol-input.bottom-3 {
+        bottom: 3.5em;
+    }
+    .ol-input.bottom-4 {
+        bottom: 4.5em;
+    }
     .ol-input.right {
         right: 0.5em;
     }
-    .ol-input.top.left {
-        top: 4.5em;
+    .ol-input.right-1 {
+        right: 1.5em;
+    }
+    .ol-input.right-2 {
+        right: 2.5em;
+    }
+    .ol-input.right-3 {
+        right: 3.5em;
+    }
+    .ol-input.right-4 {
+        right: 4.5em;
     }
     .ol-input button {
         min-height: 1.375em;
@@ -61,17 +106,20 @@ const css = `
         float:left;
     }
     .ol-input input {
-        height: 24px;
-        min-width: 240px;
+        height: 2.175em;
+        width: 16em;
         border: none;
         padding: 0;
         margin: 0;
         margin-left: 2px;
-        margin-top: 1px;
+        margin-top: 2px;
         vertical-align: top;
+        transition: width 0.25s;
     }
     .ol-input input.hidden {
-        display: none;
+        margin: 0;
+        width: 0;
+        transition: width 0.25s;
     }
 `;
 
