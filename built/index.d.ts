@@ -29,6 +29,12 @@ declare module "ol3-input/ol3-input" {
         });
         collapse(options: IOptions): void;
         expand(options: IOptions): void;
+        on(type: string, cb: Function): any;
+        on(type: "change", cb: (args: {
+            type: string;
+            target: Input;
+            value: string;
+        }) => void): any;
     }
 }
 declare module "index" {

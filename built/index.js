@@ -140,6 +140,9 @@ define("ol3-input/ol3-input", ["require", "exports", "openlayers"], function (re
             this.input.focus();
             this.input.select();
         };
+        Input.prototype.on = function (type, cb) {
+            _super.prototype.on.call(this, type, cb);
+        };
         return Input;
     }(ol.control.Control));
     exports.Input = Input;
@@ -296,12 +299,16 @@ define("ol3-input/examples/ol3-input", ["require", "exports", "openlayers", "ol3
             hideButton: true,
             onChange: changeHandler
         }));
-        map.addControl(ol3_input_1.Input.create({
+        var topLeft = ol3_input_1.Input.create({
             className: 'ol-input top-4 left',
             expanded: false,
             placeholderText: "Top Left Search",
             onChange: changeHandler
-        }));
+        });
+        map.addControl(topLeft);
+        topLeft.on("change", function (args) {
+            console.log("value", args.value, args.type, args.target);
+        });
     }
     exports.run = run;
 });

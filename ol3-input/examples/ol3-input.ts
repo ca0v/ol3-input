@@ -88,11 +88,17 @@ export function run() {
         onChange: changeHandler
     }));
 
-    map.addControl(Input.create({
+    let topLeft = Input.create({
         className: 'ol-input top-4 left',
         expanded: false,
         placeholderText: "Top Left Search",
         onChange: changeHandler
-    }));
+    });
+
+    map.addControl(topLeft);
+
+    topLeft.on("change", args => {
+        console.log("value", args.value, args.type, args.target);
+    });
 
 }

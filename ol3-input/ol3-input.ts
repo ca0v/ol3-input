@@ -275,4 +275,14 @@ export class Input extends ol.control.Control {
         this.input.focus();
         this.input.select();
     }
+
+    on(type: string, cb: Function);
+    on(type: "change", cb: (args: {
+        type: string;
+        target: Input;
+        value: string;
+    }) => void);
+    on(type: string, cb: Function) {
+        super.on(type, cb);
+    }
 }
