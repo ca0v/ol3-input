@@ -8,7 +8,7 @@
 
 ## Build
 
-* tsd install
+* typings install
 * bower install
 * tsc -w
 
