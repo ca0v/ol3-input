@@ -1,33 +1,5 @@
-// http://www.w3schools.com/charsets/ref_utf_arrows.asp
-
-import $ = require("jquery");
 import ol = require("openlayers");
-
-export function cssin(name: string, css: string) {
-    let id = `style-${name}`;
-    let styleTag = <HTMLStyleElement>document.getElementById(id);
-    if (!styleTag) {
-        styleTag = document.createElement("style");
-        styleTag.id = id;
-        styleTag.innerText = css;
-        document.head.appendChild(styleTag);
-    }
-
-    let dataset = styleTag.dataset;
-    dataset["count"] = parseInt(dataset["count"] || "0") + 1 + "";
-
-    return () => {
-        dataset["count"] = parseInt(dataset["count"] || "0") - 1 + "";
-        if (dataset["count"] === "0") {
-            styleTag.remove();
-        }
-    };
-}
-
-export function mixin<A extends any, B extends any>(a: A, b: B) {
-    Object.keys(b).forEach(k => a[k] = b[k]);
-    return <A & B>a;
-}
+import { cssin, mixin, debounce } from "ol3-fun/ol3-fun/common";
 
 const css = `
     .ol-input {
@@ -116,10 +88,9 @@ const css = `
         vertical-align: top;
         transition: width 0.25s;
     }
-    .ol-input input.hidden {
-        margin: 0;
+    .ol-input input.ol-hidden {
         width: 0;
-        transition: width 0.25s;
+        margin: 0;
     }
 `;
 
@@ -134,6 +105,12 @@ export interface IOptions {
     // what css class name to assign to the main element
     className?: string;
     expanded?: boolean;
+    hideButton?: boolean;
+    autoChange?: boolean;
+    autoClear?: boolean;
+    autoCollapse?: boolean;
+    autoSelect?: boolean;
+    canCollapse?: boolean;
     closedText?: string;
     openedText?: string;
     source?: HTMLElement;
@@ -151,6 +128,12 @@ const expando = {
 const defaults: IOptions = {
     className: 'ol-input bottom left',
     expanded: false,
+    autoChange: false,
+    autoClear: false,
+    autoCollapse: true,
+    autoSelect: true,
+    canCollapse: true,
+    hideButton: false,
     closedText: expando.right,
     openedText: expando.left,
     placeholderText: 'Search'
@@ -191,6 +174,12 @@ export class Input extends ol.control.Control {
         target: HTMLElement;
     }) {
 
+        if (options.hideButton) {
+            options.canCollapse = false;
+            options.autoCollapse = false;
+            options.expanded = true;
+        }
+
         super({
             element: options.element,
             target: options.target
@@ -200,6 +189,9 @@ export class Input extends ol.control.Control {
         button.setAttribute('type', 'button');
         button.title = options.placeholderText;
         options.element.appendChild(button);
+        if (options.hideButton) {
+            button.style.display = "none";
+        }
 
         let input = this.input = document.createElement('input');
         input.placeholder = options.placeholderText;
@@ -213,15 +205,30 @@ export class Input extends ol.control.Control {
         input.addEventListener("keypress", (args: KeyboardEvent) => {
             if (args.key === "Enter") {
                 button.focus();
-                this.collapse(options);
+                options.autoCollapse && this.collapse(options);
             }
         });
+
+        if (options.autoChange) {
+
+            input.addEventListener("keypress", debounce(() => {
+
+            }));
+        }
 
         input.addEventListener("change", () => {
             let args = {
                 type: "change",
                 value: input.value
             };
+
+            if (options.autoSelect) {
+                input.select();
+            }
+
+            if (options.autoClear) {
+                input.value = "";
+            }
 
             this.dispatchEvent(args);
             if (options.onChange) options.onChange(args);
@@ -234,23 +241,30 @@ export class Input extends ol.control.Control {
         options.expanded ? this.expand(options) : this.collapse(options);
     }
 
-    dispose() {
-        debugger;
-    }
-
     collapse(options: IOptions) {
+        if (!options.canCollapse) return;
         options.expanded = false;
-        this.input.classList.toggle("hidden", true);
-        this.button.classList.toggle("hidden", false);
+        this.input.classList.toggle(olcss.CLASS_HIDDEN, true);
+        this.button.classList.toggle(olcss.CLASS_HIDDEN, false);
         this.button.innerHTML = options.closedText;
     }
 
     expand(options: IOptions) {
         options.expanded = true;
-        this.input.classList.toggle("hidden", false);
-        this.button.classList.toggle("hidden", true);
+        this.input.classList.toggle(olcss.CLASS_HIDDEN, false);
+        this.button.classList.toggle(olcss.CLASS_HIDDEN, true);
         this.button.innerHTML = options.openedText;
         this.input.focus();
         this.input.select();
+    }
+
+    on(type: string, cb: Function);
+    on(type: "change", cb: (args: {
+        type: string;
+        target: Input;
+        value: string;
+    }) => void);
+    on(type: string, cb: Function) {
+        super.on(type, cb);
     }
 }
