@@ -86,6 +86,7 @@ const css = `
         margin-left: 2px;
         margin-top: 2px;
         vertical-align: top;
+        transition: width 0.25s;
     }
     .ol-input input.ol-hidden {
         width: 0;
