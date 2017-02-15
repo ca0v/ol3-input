@@ -1,18 +1,50 @@
 import ol = require("openlayers");
+import $ = require("jquery");
+
+import { Grid } from "ol3-grid";
 import { StyleConverter } from "ol3-symbolizer/ol3-symbolizer/format/ol3-symbolizer";
 import { Input } from "../ol3-input";
 import { OpenStreet } from "../providers/osm";
-import $ = require("jquery");
+import { cssin } from "ol3-fun/ol3-fun/common";
+import { ArcGisVectorSourceFactory } from "ol3-symbolizer/ol3-symbolizer/ags/ags-source";
+
+function zoomToFeature(map: ol.Map, feature: ol.Feature) {
+    let extent = feature.getGeometry().getExtent();
+    map.getView().animate({
+        center: ol.extent.getCenter(extent),
+        duration: 2500
+    });
+    let w1 = ol.extent.getWidth(map.getView().calculateExtent(map.getSize()));
+    let w2 = ol.extent.getWidth(extent);
+
+    map.getView().animate({
+        zoom: map.getView().getZoom() + Math.round(Math.log(w1 / w2) / Math.log(2)) - 1,
+        duration: 2500
+    });
+
+}
 
 export function run() {
 
+    cssin("examples/ol3-input", `
+.ol-grid .ol-grid-container.ol-hidden {
+}
+.ol-grid .ol-grid-container {
+    width: 15em;
+}
+.ol-input.top.right > input {
+    width: 18em;
+}
+    `);
+
     let searchProvider = new OpenStreet();
 
-    let center = ol.proj.transform([-0.92, 52.96], 'EPSG:4326', 'EPSG:3857');
+    let center = ol.proj.transform([-120, 35], 'EPSG:4326', 'EPSG:3857');
 
     let mapContainer = document.getElementsByClassName("map")[0];
 
     let map = new ol.Map({
+        loadTilesWhileAnimating: true,
         target: mapContainer,
         layers: [
             new ol.layer.Tile({
@@ -32,31 +64,92 @@ export function run() {
 
     let vector = new ol.layer.Vector({
         source: source,
-        style: (feature: ol.Feature, resolution: number) =>
-            symbolizer.fromJson({
-                fill: {
-                    color: "rgba(33, 33, 33, 0.2)"
-                },
-                stroke: {
-                    color: "#F00"
-                },
-                text: {
-                    text: feature.get("text")
-                }
-            }) || new ol.style.Style({
-                fill: new ol.style.Fill({
-                    color: "#CCC"
-                }),
-                stroke: new ol.style.Stroke({
-                    color: "rgba(255,0,0,1)"
-                }),
-                text: new ol.style.Text({
-                    text: feature.get("text")
-                })
-            })
+        style: (feature: ol.Feature, resolution: number) => {
+            let style = feature.getStyle();
+            if (!style) {
+                style = symbolizer.fromJson({
+                    circle: {
+                        radius: 4,
+                        fill: {
+                            color: "rgba(33, 33, 33, 0.2)"
+                        },
+                        stroke: {
+                            color: "#F00"
+                        }
+                    },
+                    text: {
+                        text: feature.get("text")
+                    }
+                });
+                feature.setStyle(style);
+            }
+            return <ol.style.Style>style;
+        }
     });
 
-    map.addLayer(vector);
+    ArcGisVectorSourceFactory.create({
+        map: map,
+        services: 'https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services',
+        serviceName: 'USA_States_Generalized',
+        layers: [0]
+    }).then(layers => {
+        layers.forEach(layer => {
+            layer.setOpacity(0.5);
+            map.addLayer(layer);
+            let grid = Grid.create({
+                className: "ol-grid top-2 left-2",
+                labelAttributeName: "STATE_ABBR",
+                expanded: true,
+                currentExtent: true,
+                autoCollapse: true,
+                autoPan: false,
+                showIcon: true,
+                layers: [layer]
+            });
+            map.addControl(grid);
+
+            grid.on("feature-click", args => {
+                zoomToFeature(map, args.feature);
+            });
+
+            map.addControl(Input.create({
+                className: "ol-input top left-2 ",
+                closedText: "+",
+                openedText: "−",
+                placeholderText: "State Search",
+                onChange: args => {
+                    let value = args.value.toLocaleLowerCase();
+                    let feature = layer.getSource().forEachFeature(feature => {
+                        let text = <string>feature.get("STATE_ABBR");
+                        if (!text) return;
+                        if (-1 < text.toLocaleLowerCase().indexOf(value)) {
+                            return feature;
+                        }
+                    });
+                    if (feature) {
+                        zoomToFeature(map, feature);
+                    } else {
+                        changeHandler({ value: value });
+                    }
+                }
+            }));
+
+        });
+    }).then(() => {
+        map.addLayer(vector);
+    });
+
+    let grid = Grid.create({
+        className: "ol-grid top-2 right",
+        currentExtent: false,
+        autoCollapse: false,
+        autoPan: true,
+        labelAttributeName: "text",
+        showIcon: false,
+        layers: [vector]
+    });
+
+    map.addControl(grid);
 
     let changeHandler = (args: { value: string }) => {
         if (!args.value) return;
@@ -82,7 +175,6 @@ export function run() {
                     let [lat1, lat2, lon1, lon2] = r.original.boundingbox.map(v => parseFloat(v));
                     [lon1, lat1] = ol.proj.transform([lon1, lat1], "EPSG:4326", "EPSG:3857");
                     [lon2, lat2] = ol.proj.transform([lon2, lat2], "EPSG:4326", "EPSG:3857");
-                    map.getView().fit([lon1, lat1, lon2, lat2], map.getSize());
                     let extent = <ol.Extent>[lon1, lat1, lon2, lat2];
 
                     let feature = new ol.Feature(new ol.geom.Polygon([[
@@ -95,12 +187,13 @@ export function run() {
 
                     feature.set("text", r.original.display_name);
                     source.addFeature(feature);
+                    zoomToFeature(map, feature);
                 } else {
                     let [lon, lat] = ol.proj.transform([r.lon, r.lat], "EPSG:4326", "EPSG:3857");
-                    map.getView().setCenter([lon, lat]);
                     let feature = new ol.Feature(new ol.geom.Point([lon, lat]));
                     feature.set("text", r.original.display_name);
                     source.addFeature(feature);
+                    zoomToFeature(map, feature);
                 }
                 return true;
             });
@@ -109,15 +202,6 @@ export function run() {
         });
 
     };
-
-    // vertical elipsis: &#x22EE;
-    let geocoder = Input.create({
-        closedText: "+",
-        openedText: "−",
-        placeholderText: "Bottom Left Search",
-        onChange: changeHandler
-    });
-    map.addControl(geocoder);
 
     map.addControl(Input.create({
         className: 'ol-input bottom-2 right',
@@ -138,31 +222,22 @@ export function run() {
         autoChange: true,
         onChange: args => {
             let value = args.value.toLocaleLowerCase();
-            source.forEachFeature(feature => {
+            let feature = source.forEachFeature(feature => {
                 let text = <string>feature.get("text");
                 if (!text) return;
                 if (-1 < text.toLocaleLowerCase().indexOf(value)) {
-                    map.getView().animate({
-                        center: feature.getGeometry().getClosestPoint(map.getView().getCenter()),
-                        duration: 1000
-                    })
-                    return true;
+                    return feature;
                 }
-            })
+            });
+            if (feature) {
+                map.getView().animate({
+                    center: feature.getGeometry().getClosestPoint(map.getView().getCenter()),
+                    duration: 1000
+                });
+            } else {
+                changeHandler({ value: value });
+            }
         }
     }));
-
-    let topLeft = Input.create({
-        className: 'ol-input top-4 left',
-        expanded: false,
-        placeholderText: "Top Left Search",
-        onChange: changeHandler
-    });
-
-    map.addControl(topLeft);
-
-    topLeft.on("change", args => {
-        console.log("value", args.value, args.type, args.target);
-    });
 
 }
