@@ -19,8 +19,8 @@ export function run() {
             })
         ],
         view: new ol.View({
-            center: [-0.92, 52.96],
-            projection: 'EPSG:4326',
+            center: center,
+            projection: 'EPSG:3857',
             zoom: 6
         })
     });
@@ -48,9 +48,12 @@ export function run() {
                 console.log(r);
                 if (r.original.boundingbox) {
                     let [lat1, lat2, lon1, lon2] = r.original.boundingbox.map(v => parseFloat(v));
+                    [lon1, lat1] = ol.proj.transform([lon1, lat1], "EPSG:4326", "EPSG:3857");
+                    [lon2, lat2] = ol.proj.transform([lon2, lat2], "EPSG:4326", "EPSG:3857");
                     map.getView().fit([lon1, lat1, lon2, lat2], map.getSize());
                 } else {
-                    map.getView().setCenter([r.lon, r.lat]);
+                    let [lon, lat] = ol.proj.transform([r.lon, r.lat], "EPSG:4326", "EPSG:3857");
+                    map.getView().setCenter([lon, lat]);
                 }
                 return true;
             });

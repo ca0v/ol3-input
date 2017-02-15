@@ -1,6 +1,3 @@
-// http://www.w3schools.com/charsets/ref_utf_arrows.asp
-
-import $ = require("jquery");
 import ol = require("openlayers");
 
 export function cssin(name: string, css: string) {

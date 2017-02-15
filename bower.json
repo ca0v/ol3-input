@@ -3,15 +3,15 @@
   "description": "Input control for OpenLayers 3",
   "homepage": "https://github.com/ca0v/ol3-input",
   "main": [
-    "ol3-input.ts",
+    "index.ts",
     "built/index.js"
   ],
   "devDependencies": {
     "ol3-symbolizer": "git://github.com/ca0v/ol3-symbolizer.git#v3.20.1"
   },
   "dependencies": {
-    "openlayers": "https://github.com/openlayers/ol3/releases/download/v3.20.1/v3.20.1-dist.zip",
-    "requirejs": "^2.2.0"
+    "openlayers": "https://github.com/openlayers/openlayers/releases/download/v4.0.1/v4.0.1-dist.zip",
+    "requirejs": "^2.3.2"
   },
   "moduleType": [
     "amd"
@@ -38,5 +38,5 @@
   "typescript": {
     "definition": "built/index.d.ts"
   },
-  "version": "3.20.1"
+  "version": "4.0.1"
 }

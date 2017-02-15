@@ -14,8 +14,9 @@
             ]
         }
     },
-    "exclude": [
-        "bower_components",
-        "built"
+    "include": [
+        "index.ts",
+        "ol3-input",
+        "typings/index.d.ts"
     ]
 }

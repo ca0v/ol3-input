@@ -3,7 +3,6 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-// http://www.w3schools.com/charsets/ref_utf_arrows.asp
 define("ol3-input/ol3-input", ["require", "exports", "openlayers"], function (require, exports, ol) {
     "use strict";
     function cssin(name, css) {
@@ -237,8 +236,8 @@ define("ol3-input/examples/ol3-input", ["require", "exports", "openlayers", "ol3
                 })
             ],
             view: new ol.View({
-                center: [-0.92, 52.96],
-                projection: 'EPSG:4326',
+                center: center,
+                projection: 'EPSG:3857',
                 zoom: 6
             })
         });
@@ -263,12 +262,16 @@ define("ol3-input/examples/ol3-input", ["require", "exports", "openlayers", "ol3
                     console.log(r);
                     if (r.original.boundingbox) {
                         var _a = r.original.boundingbox.map(function (v) { return parseFloat(v); }), lat1 = _a[0], lat2 = _a[1], lon1 = _a[2], lon2 = _a[3];
+                        _b = ol.proj.transform([lon1, lat1], "EPSG:4326", "EPSG:3857"), lon1 = _b[0], lat1 = _b[1];
+                        _c = ol.proj.transform([lon2, lat2], "EPSG:4326", "EPSG:3857"), lon2 = _c[0], lat2 = _c[1];
                         map.getView().fit([lon1, lat1, lon2, lat2], map.getSize());
                     }
                     else {
-                        map.getView().setCenter([r.lon, r.lat]);
+                        var _d = ol.proj.transform([r.lon, r.lat], "EPSG:4326", "EPSG:3857"), lon = _d[0], lat = _d[1];
+                        map.getView().setCenter([lon, lat]);
                     }
                     return true;
+                    var _b, _c;
                 });
             }).fail(function () {
                 console.error("geocoder failed");
