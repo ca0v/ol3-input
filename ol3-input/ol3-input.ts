@@ -1,30 +1,5 @@
 import ol = require("openlayers");
-
-export function cssin(name: string, css: string) {
-    let id = `style-${name}`;
-    let styleTag = <HTMLStyleElement>document.getElementById(id);
-    if (!styleTag) {
-        styleTag = document.createElement("style");
-        styleTag.id = id;
-        styleTag.innerText = css;
-        document.head.appendChild(styleTag);
-    }
-
-    let dataset = styleTag.dataset;
-    dataset["count"] = parseInt(dataset["count"] || "0") + 1 + "";
-
-    return () => {
-        dataset["count"] = parseInt(dataset["count"] || "0") - 1 + "";
-        if (dataset["count"] === "0") {
-            styleTag.remove();
-        }
-    };
-}
-
-export function mixin<A extends any, B extends any>(a: A, b: B) {
-    Object.keys(b).forEach(k => a[k] = b[k]);
-    return <A & B>a;
-}
+import { cssin, mixin, debounce } from "ol3-fun/ol3-fun/common";
 
 const css = `
     .ol-input {
@@ -130,6 +105,7 @@ export interface IOptions {
     className?: string;
     expanded?: boolean;
     hideButton?: boolean;
+    autoChange?: boolean;
     autoClear?: boolean;
     autoCollapse?: boolean;
     autoSelect?: boolean;
@@ -151,6 +127,7 @@ const expando = {
 const defaults: IOptions = {
     className: 'ol-input bottom left',
     expanded: false,
+    autoChange: false,
     autoClear: false,
     autoCollapse: true,
     autoSelect: true,
@@ -230,6 +207,13 @@ export class Input extends ol.control.Control {
                 options.autoCollapse && this.collapse(options);
             }
         });
+
+        if (options.autoChange) {
+
+            input.addEventListener("keypress", debounce(() => {
+
+            }));
+        }
 
         input.addEventListener("change", () => {
             let args = {
