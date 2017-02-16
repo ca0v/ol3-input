@@ -107,7 +107,7 @@ define("bower_components/ol3-fun/ol3-fun/common", ["require", "exports"], functi
 });
 define("ol3-input/ol3-input", ["require", "exports", "openlayers", "bower_components/ol3-fun/ol3-fun/common"], function (require, exports, ol, common_1) {
     "use strict";
-    var css = "\n    .ol-input {\n        position:absolute;\n    }\n    .ol-input.top {\n        top: 0.5em;\n    }\n    .ol-input.top-1 {\n        top: 1.5em;\n    }\n    .ol-input.top-2 {\n        top: 2.5em;\n    }\n    .ol-input.top-3 {\n        top: 3.5em;\n    }\n    .ol-input.top-4 {\n        top: 4.5em;\n    }\n    .ol-input.left {\n        left: 0.5em;\n    }\n    .ol-input.left-1 {\n        left: 1.5em;\n    }\n    .ol-input.left-2 {\n        left: 2.5em;\n    }\n    .ol-input.left-3 {\n        left: 3.5em;\n    }\n    .ol-input.left-4 {\n        left: 4.5em;\n    }\n    .ol-input.bottom {\n        bottom: 0.5em;\n    }\n    .ol-input.bottom-1 {\n        bottom: 1.5em;\n    }\n    .ol-input.bottom-2 {\n        bottom: 2.5em;\n    }\n    .ol-input.bottom-3 {\n        bottom: 3.5em;\n    }\n    .ol-input.bottom-4 {\n        bottom: 4.5em;\n    }\n    .ol-input.right {\n        right: 0.5em;\n    }\n    .ol-input.right-1 {\n        right: 1.5em;\n    }\n    .ol-input.right-2 {\n        right: 2.5em;\n    }\n    .ol-input.right-3 {\n        right: 3.5em;\n    }\n    .ol-input.right-4 {\n        right: 4.5em;\n    }\n    .ol-input button {\n        min-height: 1.375em;\n        min-width: 1.375em;\n        width: auto;\n        display: inline;\n    }\n    .ol-input.left button {\n        float:right;\n    }\n    .ol-input.right button {\n        float:left;\n    }\n    .ol-input input {\n        height: 2.175em;\n        width: 16em;\n        border: none;\n        padding: 0;\n        margin: 0;\n        margin-left: 2px;\n        margin-top: 2px;\n        vertical-align: top;\n    }\n    .ol-input input.ol-hidden {\n        width: 0;\n        margin: 0;\n    }\n";
+    var css = "\n    .ol-input {\n        position:absolute;\n    }\n    .ol-input.top {\n        top: 0.5em;\n    }\n    .ol-input.top-1 {\n        top: 1.5em;\n    }\n    .ol-input.top-2 {\n        top: 2.5em;\n    }\n    .ol-input.top-3 {\n        top: 3.5em;\n    }\n    .ol-input.top-4 {\n        top: 4.5em;\n    }\n    .ol-input.left {\n        left: 0.5em;\n    }\n    .ol-input.left-1 {\n        left: 1.5em;\n    }\n    .ol-input.left-2 {\n        left: 2.5em;\n    }\n    .ol-input.left-3 {\n        left: 3.5em;\n    }\n    .ol-input.left-4 {\n        left: 4.5em;\n    }\n    .ol-input.bottom {\n        bottom: 0.5em;\n    }\n    .ol-input.bottom-1 {\n        bottom: 1.5em;\n    }\n    .ol-input.bottom-2 {\n        bottom: 2.5em;\n    }\n    .ol-input.bottom-3 {\n        bottom: 3.5em;\n    }\n    .ol-input.bottom-4 {\n        bottom: 4.5em;\n    }\n    .ol-input.right {\n        right: 0.5em;\n    }\n    .ol-input.right-1 {\n        right: 1.5em;\n    }\n    .ol-input.right-2 {\n        right: 2.5em;\n    }\n    .ol-input.right-3 {\n        right: 3.5em;\n    }\n    .ol-input.right-4 {\n        right: 4.5em;\n    }\n    .ol-input button {\n        min-height: 1.375em;\n        min-width: 1.375em;\n        width: auto;\n        display: inline;\n    }\n    .ol-input.left button {\n        float:right;\n    }\n    .ol-input.right button {\n        float:left;\n    }\n    .ol-input input {\n        height: 2.175em;\n        width: 16em;\n        border: none;\n        padding: 0;\n        margin: 0;\n        margin-left: 2px;\n        margin-top: 2px;\n        vertical-align: top;\n        transition: width 0.25s;\n    }\n    .ol-input input.ol-hidden {\n        width: 0;\n        margin: 0;\n    }\n";
     var olcss = {
         CLASS_CONTROL: 'ol-control',
         CLASS_UNSELECTABLE: 'ol-unselectable',
@@ -129,7 +129,8 @@ define("ol3-input/ol3-input", ["require", "exports", "openlayers", "bower_compon
         hideButton: false,
         closedText: expando.right,
         openedText: expando.left,
-        placeholderText: 'Search'
+        placeholderText: 'Search',
+        regex: /\S{2,}/
     };
     var Input = (function (_super) {
         __extends(Input, _super);
@@ -157,24 +158,39 @@ define("ol3-input/ol3-input", ["require", "exports", "openlayers", "bower_compon
             button.addEventListener("click", function () {
                 options.expanded ? _this.collapse(options) : _this.expand(options);
             });
+            if (options.autoCollapse) {
+                input.addEventListener("keydown", function (args) {
+                    if (args.key === "Enter") {
+                        button.focus();
+                        _this.collapse(options);
+                    }
+                });
+            }
             input.addEventListener("keypress", function (args) {
                 if (args.key === "Enter") {
                     button.focus();
-                    options.autoCollapse && _this.collapse(options);
                 }
             });
             if (options.autoChange) {
                 input.addEventListener("keypress", common_1.debounce(function () {
-                }));
+                    if (options.regex && !options.regex.test(input.value))
+                        return;
+                    var args = {
+                        type: "change",
+                        value: input.value
+                    };
+                    options.autoSelect && _this.input.select();
+                    _this.dispatchEvent(args);
+                }, 500));
             }
             input.addEventListener("change", function () {
+                if (options.regex && !options.regex.test(input.value))
+                    return;
                 var args = {
                     type: "change",
                     value: input.value
                 };
-                if (options.autoSelect) {
-                    input.select();
-                }
+                options.autoSelect && input.select();
                 if (options.autoClear) {
                     input.value = "";
                 }
@@ -182,9 +198,11 @@ define("ol3-input/ol3-input", ["require", "exports", "openlayers", "bower_compon
                 if (options.onChange)
                     options.onChange(args);
             });
-            input.addEventListener("blur", function () {
-                //this.collapse(options);
-            });
+            if (options.autoSelect) {
+                input.addEventListener("focus", function () {
+                    input.select();
+                });
+            }
             options.expanded ? _this.expand(options) : _this.collapse(options);
             return _this;
         }
@@ -220,7 +238,7 @@ define("ol3-input/ol3-input", ["require", "exports", "openlayers", "bower_compon
             this.button.classList.toggle(olcss.CLASS_HIDDEN, true);
             this.button.innerHTML = options.openedText;
             this.input.focus();
-            this.input.select();
+            options.autoSelect && this.input.select();
         };
         Input.prototype.on = function (type, cb) {
             _super.prototype.on.call(this, type, cb);
@@ -1612,7 +1630,7 @@ define("ol3-input/examples/ol3-input", ["require", "exports", "openlayers", "jqu
         });
     }
     function run() {
-        common_4.cssin("examples/ol3-input", "\n.ol-grid .ol-grid-container.ol-hidden {\n}\n.ol-grid .ol-grid-container {\n    width: 15em;\n}\n.ol-input.top.right > input {\n    width: 18em;\n}\n    ");
+        common_4.cssin("examples/ol3-input", "\n.ol-grid .ol-grid-container.ol-hidden {\n}\n\n.ol-grid .ol-grid-container {\n    width: 15em;\n}\n\n.ol-input.top.right > input {\n    width: 18em;\n}\n\n.ol-grid-table {\n    width: 100%;\n}\n\ntable.ol-grid-table {\n    border-collapse: collapse;\n    width: 100%;\n}\n\ntable.ol-grid-table > td {\n    padding: 8px;\n    text-align: left;\n    border-bottom: 1px solid #ddd;\n}\n\n.ol-input input {\n    height: 1.75em !important;\n}\n\n.ol-input.statecode > input {\n    text-transform: uppercase;\n    width: 2em;\n    text-align: center;\n}\n    ");
         var searchProvider = new osm_1.OpenStreet();
         var center = ol.proj.transform([-120, 35], 'EPSG:4326', 'EPSG:3857');
         var mapContainer = document.getElementsByClassName("map")[0];
@@ -1679,29 +1697,36 @@ define("ol3-input/examples/ol3-input", ["require", "exports", "openlayers", "jqu
                 grid.on("feature-click", function (args) {
                     zoomToFeature(map, args.feature);
                 });
-                map.addControl(ol3_input_1.Input.create({
-                    className: "ol-input top left-2 ",
+                var input = ol3_input_1.Input.create({
+                    className: "ol-input statecode top left-2 ",
                     closedText: "+",
                     openedText: "−",
-                    placeholderText: "State Search",
-                    onChange: function (args) {
-                        var value = args.value.toLocaleLowerCase();
-                        var feature = layer.getSource().forEachFeature(function (feature) {
-                            var text = feature.get("STATE_ABBR");
-                            if (!text)
-                                return;
-                            if (-1 < text.toLocaleLowerCase().indexOf(value)) {
-                                return feature;
-                            }
-                        });
-                        if (feature) {
-                            zoomToFeature(map, feature);
+                    autoChange: true,
+                    autoSelect: true,
+                    autoClear: false,
+                    autoCollapse: false,
+                    placeholderText: "XX",
+                    regex: /^\w{2}$/m
+                });
+                input.input.maxLength = 2;
+                map.addControl(input);
+                input.on("change", function (args) {
+                    var value = args.value.toLocaleLowerCase();
+                    var feature = layer.getSource().forEachFeature(function (feature) {
+                        var text = feature.get("STATE_ABBR");
+                        if (!text)
+                            return;
+                        if (-1 < text.toLocaleLowerCase().indexOf(value)) {
+                            return feature;
                         }
-                        else {
-                            changeHandler({ value: value });
-                        }
+                    });
+                    if (feature) {
+                        zoomToFeature(map, feature);
                     }
-                }));
+                    else {
+                        changeHandler({ value: value });
+                    }
+                });
             });
         }).then(function () {
             map.addLayer(vector);

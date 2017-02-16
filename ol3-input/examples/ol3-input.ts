@@ -29,11 +29,38 @@ export function run() {
     cssin("examples/ol3-input", `
 .ol-grid .ol-grid-container.ol-hidden {
 }
+
 .ol-grid .ol-grid-container {
     width: 15em;
 }
+
 .ol-input.top.right > input {
     width: 18em;
+}
+
+.ol-grid-table {
+    width: 100%;
+}
+
+table.ol-grid-table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+table.ol-grid-table > td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.ol-input input {
+    height: 1.75em !important;
+}
+
+.ol-input.statecode > input {
+    text-transform: uppercase;
+    width: 2em;
+    text-align: center;
 }
     `);
 
@@ -112,27 +139,35 @@ export function run() {
                 zoomToFeature(map, args.feature);
             });
 
-            map.addControl(Input.create({
-                className: "ol-input top left-2 ",
+            let input = Input.create({
+                className: "ol-input statecode top left-2 ",
                 closedText: "+",
                 openedText: "−",
-                placeholderText: "State Search",
-                onChange: args => {
-                    let value = args.value.toLocaleLowerCase();
-                    let feature = layer.getSource().forEachFeature(feature => {
-                        let text = <string>feature.get("STATE_ABBR");
-                        if (!text) return;
-                        if (-1 < text.toLocaleLowerCase().indexOf(value)) {
-                            return feature;
-                        }
-                    });
-                    if (feature) {
-                        zoomToFeature(map, feature);
-                    } else {
-                        changeHandler({ value: value });
+                autoChange: true,
+                autoSelect: true,
+                autoClear: false,
+                autoCollapse: false,
+                placeholderText: "XX",
+                regex: /^\w{2}$/m
+            });
+            input.input.maxLength = 2;
+            
+            map.addControl(input);
+            input.on("change", args => {
+                let value = args.value.toLocaleLowerCase();
+                let feature = layer.getSource().forEachFeature(feature => {
+                    let text = <string>feature.get("STATE_ABBR");
+                    if (!text) return;
+                    if (-1 < text.toLocaleLowerCase().indexOf(value)) {
+                        return feature;
                     }
+                });
+                if (feature) {
+                    zoomToFeature(map, feature);
+                } else {
+                    changeHandler({ value: value });
                 }
-            }));
+            });
 
         });
     }).then(() => {

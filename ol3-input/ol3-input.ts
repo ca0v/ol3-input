@@ -115,6 +115,7 @@ export interface IOptions {
     openedText?: string;
     source?: HTMLElement;
     target?: HTMLElement;
+    regex?: RegExp;
     // what to show on the tooltip
     placeholderText?: string;
     onChange?: (args: { value: string }) => void;
@@ -136,7 +137,8 @@ const defaults: IOptions = {
     hideButton: false,
     closedText: expando.right,
     openedText: expando.left,
-    placeholderText: 'Search'
+    placeholderText: 'Search',
+    regex: /\S{2,}/
 };
 
 export class Input extends ol.control.Control {
@@ -166,8 +168,8 @@ export class Input extends ol.control.Control {
         return new Input(geocoderOptions);
     }
 
-    private button: HTMLButtonElement;
-    private input: HTMLInputElement;
+    button: HTMLButtonElement;
+    input: HTMLInputElement;
 
     constructor(options: IOptions & {
         element: HTMLElement;
@@ -202,10 +204,18 @@ export class Input extends ol.control.Control {
             options.expanded ? this.collapse(options) : this.expand(options);
         });
 
+        if (options.autoCollapse) {
+            input.addEventListener("keydown", (args: KeyboardEvent) => {
+                if (args.key === "Enter") {
+                    button.focus();
+                    this.collapse(options);
+                }
+            });
+        }
+
         input.addEventListener("keypress", (args: KeyboardEvent) => {
             if (args.key === "Enter") {
                 button.focus();
-                options.autoCollapse && this.collapse(options);
             }
         });
 
@@ -213,18 +223,29 @@ export class Input extends ol.control.Control {
 
             input.addEventListener("keypress", debounce(() => {
 
-            }));
+                if (options.regex && !options.regex.test(input.value)) return;
+                let args = {
+                    type: "change",
+                    value: input.value
+                };
+
+                options.autoSelect && this.input.select();
+
+                this.dispatchEvent(args);
+
+            }, 500));
         }
 
         input.addEventListener("change", () => {
+
+            if (options.regex && !options.regex.test(input.value)) return;
+
             let args = {
                 type: "change",
                 value: input.value
             };
 
-            if (options.autoSelect) {
-                input.select();
-            }
+            options.autoSelect && input.select();
 
             if (options.autoClear) {
                 input.value = "";
@@ -234,9 +255,11 @@ export class Input extends ol.control.Control {
             if (options.onChange) options.onChange(args);
         });
 
-        input.addEventListener("blur", () => {
-            //this.collapse(options);
-        });
+        if (options.autoSelect) {
+            input.addEventListener("focus", () => {
+                input.select();
+            });
+        }
 
         options.expanded ? this.expand(options) : this.collapse(options);
     }
@@ -255,7 +278,7 @@ export class Input extends ol.control.Control {
         this.button.classList.toggle(olcss.CLASS_HIDDEN, true);
         this.button.innerHTML = options.openedText;
         this.input.focus();
-        this.input.select();
+        options.autoSelect && this.input.select();
     }
 
     on(type: string, cb: Function);

@@ -28,6 +28,7 @@ declare module "ol3-input/ol3-input" {
         openedText?: string;
         source?: HTMLElement;
         target?: HTMLElement;
+        regex?: RegExp;
         placeholderText?: string;
         onChange?: (args: {
             value: string;
@@ -35,8 +36,8 @@ declare module "ol3-input/ol3-input" {
     }
     export class Input extends ol.control.Control {
         static create(options?: IOptions): Input;
-        private button;
-        private input;
+        button: HTMLButtonElement;
+        input: HTMLInputElement;
         constructor(options: IOptions & {
             element: HTMLElement;
             target: HTMLElement;
