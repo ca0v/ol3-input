@@ -1,33 +1,5 @@
-// http://www.w3schools.com/charsets/ref_utf_arrows.asp
-
-import $ = require("jquery");
 import ol = require("openlayers");
-
-export function cssin(name: string, css: string) {
-    let id = `style-${name}`;
-    let styleTag = <HTMLStyleElement>document.getElementById(id);
-    if (!styleTag) {
-        styleTag = document.createElement("style");
-        styleTag.id = id;
-        styleTag.innerText = css;
-        document.head.appendChild(styleTag);
-    }
-
-    let dataset = styleTag.dataset;
-    dataset["count"] = parseInt(dataset["count"] || "0") + 1 + "";
-
-    return () => {
-        dataset["count"] = parseInt(dataset["count"] || "0") - 1 + "";
-        if (dataset["count"] === "0") {
-            styleTag.remove();
-        }
-    };
-}
-
-export function mixin<A extends any, B extends any>(a: A, b: B) {
-    Object.keys(b).forEach(k => a[k] = b[k]);
-    return <A & B>a;
-}
+import { cssin, mixin } from "ol3-fun/ol3-fun/common";
 
 const css = `
     .ol-input {
