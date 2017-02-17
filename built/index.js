@@ -1587,9 +1587,6 @@ define("bower_components/ol3-symbolizer/ol3-symbolizer/ags/ags-source", ["requir
                     });
                     var styleMap = converter.fromRenderer(layerInfo.drawingInfo.renderer, { url: "for icons?" });
                     layer.setStyle(function (feature, resolution) {
-                        var style = feature.getStyle();
-                        if (style)
-                            return style;
                         if (styleMap instanceof ol.style.Style) {
                             return styleMap;
                         }
@@ -1630,7 +1627,7 @@ define("ol3-input/examples/ol3-input", ["require", "exports", "openlayers", "jqu
         });
     }
     function run() {
-        common_4.cssin("examples/ol3-input", "\n.ol-grid .ol-grid-container.ol-hidden {\n}\n\n.ol-grid .ol-grid-container {\n    width: 15em;\n}\n\n.ol-input.top.right > input {\n    width: 18em;\n}\n\n.ol-grid-table {\n    width: 100%;\n}\n\ntable.ol-grid-table {\n    border-collapse: collapse;\n    width: 100%;\n}\n\ntable.ol-grid-table > td {\n    padding: 8px;\n    text-align: left;\n    border-bottom: 1px solid #ddd;\n}\n\n.ol-input input {\n    height: 1.75em !important;\n}\n\n.ol-input.statecode > input {\n    text-transform: uppercase;\n    width: 2em;\n    text-align: center;\n}\n    ");
+        common_4.cssin("examples/ol3-input", "\n\n.ol-grid.statecode .ol-grid-container {\n    background-color: white;\n    width: 10em;\n}\n\n.ol-grid .ol-grid-container.ol-hidden {\n}\n\n.ol-grid .ol-grid-container {\n    width: 15em;\n}\n\n.ol-input.top.right > input {\n    width: 18em;\n}\n\n.ol-grid-table {\n    width: 100%;\n}\n\ntable.ol-grid-table {\n    border-collapse: collapse;\n    width: 100%;\n}\n\ntable.ol-grid-table > td {\n    padding: 8px;\n    text-align: left;\n    border-bottom: 1px solid #ddd;\n}\n\n.ol-input input {\n    height: 1.75em !important;\n}\n\n.ol-input.statecode > input {\n    text-transform: uppercase;\n    width: 2em;\n    text-align: center;\n}\n    ");
         var searchProvider = new osm_1.OpenStreet();
         var center = ol.proj.transform([-120, 35], 'EPSG:4326', 'EPSG:3857');
         var mapContainer = document.getElementsByClassName("map")[0];
@@ -1681,11 +1678,28 @@ define("ol3-input/examples/ol3-input", ["require", "exports", "openlayers", "jqu
             layers: [0]
         }).then(function (layers) {
             layers.forEach(function (layer) {
-                layer.setOpacity(0.5);
+                layer.setStyle(function (feature, resolution) {
+                    var style = feature.getStyle();
+                    if (!style) {
+                        style = symbolizer.fromJson({
+                            fill: {
+                                color: "rgba(200,200,200,0.5)"
+                            },
+                            stroke: {
+                                color: "rgba(33,33,33,0.8)",
+                                width: 3
+                            },
+                            text: {
+                                text: feature.get("STATE_ABBR")
+                            }
+                        });
+                        feature.setStyle(style);
+                    }
+                    return style;
+                });
                 map.addLayer(layer);
                 var grid = ol3_grid_1.Grid.create({
-                    className: "ol-grid top-2 left-2",
-                    labelAttributeName: "STATE_ABBR",
+                    className: "ol-grid statecode top-2 left-2",
                     expanded: true,
                     currentExtent: true,
                     autoCollapse: true,
@@ -1696,6 +1710,9 @@ define("ol3-input/examples/ol3-input", ["require", "exports", "openlayers", "jqu
                 map.addControl(grid);
                 grid.on("feature-click", function (args) {
                     zoomToFeature(map, args.feature);
+                });
+                grid.on("feature-hover", function (args) {
+                    // TODO: highlight args.feature
                 });
                 var input = ol3_input_1.Input.create({
                     className: "ol-input statecode top left-2 ",

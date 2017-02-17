@@ -27,6 +27,12 @@ function zoomToFeature(map: ol.Map, feature: ol.Feature) {
 export function run() {
 
     cssin("examples/ol3-input", `
+
+.ol-grid.statecode .ol-grid-container {
+    background-color: white;
+    width: 10em;
+}
+
 .ol-grid .ol-grid-container.ol-hidden {
 }
 
@@ -121,11 +127,31 @@ table.ol-grid-table > td {
         layers: [0]
     }).then(layers => {
         layers.forEach(layer => {
-            layer.setOpacity(0.5);
+
+            layer.setStyle((feature: ol.Feature, resolution) => {
+                let style = <ol.style.Style>feature.getStyle();
+                if (!style) {
+                    style = symbolizer.fromJson({
+                        fill: {
+                            color: "rgba(200,200,200,0.5)"
+                        },
+                        stroke: {
+                            color: "rgba(33,33,33,0.8)",
+                            width: 3
+                        },
+                        text: {
+                            text: feature.get("STATE_ABBR")
+                        }
+                    });
+                    feature.setStyle(style);
+                }
+                return style;
+            });
+
             map.addLayer(layer);
+
             let grid = Grid.create({
-                className: "ol-grid top-2 left-2",
-                labelAttributeName: "STATE_ABBR",
+                className: "ol-grid statecode top-2 left-2",
                 expanded: true,
                 currentExtent: true,
                 autoCollapse: true,
@@ -137,6 +163,10 @@ table.ol-grid-table > td {
 
             grid.on("feature-click", args => {
                 zoomToFeature(map, args.feature);
+            });
+
+            grid.on("feature-hover", args => {
+                // TODO: highlight args.feature
             });
 
             let input = Input.create({
@@ -151,7 +181,7 @@ table.ol-grid-table > td {
                 regex: /^\w{2}$/m
             });
             input.input.maxLength = 2;
-            
+
             map.addControl(input);
             input.on("change", args => {
                 let value = args.value.toLocaleLowerCase();
