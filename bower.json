@@ -3,7 +3,7 @@
   "description": "Input control for OpenLayers 3",
   "homepage": "https://github.com/ca0v/ol3-input",
   "main": [
-    "ol3-input.ts",
+    "index.ts",
     "built/index.js"
   ],
   "devDependencies": {
