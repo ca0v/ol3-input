@@ -1,5 +1,9 @@
 import ol = require("openlayers");
+import $ = require("jquery");
+
 import { cssin, mixin, debounce } from "ol3-fun/ol3-fun/common";
+import { zoomToFeature } from "ol3-fun/ol3-fun/navigation";
+import { OpenStreet } from "./providers/osm";
 
 const css = `
     .ol-input {
@@ -101,7 +105,68 @@ let olcss = {
     CLASS_HIDDEN: 'ol-hidden'
 };
 
-export interface IOptions {
+function changeHandlerFactor(input: Input) {
+    let options = input.options;
+
+    let searchProvider = new OpenStreet();
+
+    let changeHandler = (args: { value: string }) => {
+        if (!args.value) return;
+        console.log("search", args.value);
+
+        let searchArgs = searchProvider.getParameters({
+            query: args.value,
+            limit: 1,
+            countrycodes: 'us',
+            lang: 'en'
+        });
+
+        $.ajax({
+            url: searchArgs.url,
+            method: searchProvider.method || 'GET',
+            data: searchArgs.params,
+            dataType: searchProvider.dataType || 'json'
+        }).then(json => {
+            let results = searchProvider.handleResponse(json);
+            results.some(r => {
+                console.log(r);
+                if (r.original.boundingbox) {
+                    let [lat1, lat2, lon1, lon2] = r.original.boundingbox.map(v => parseFloat(v));
+                    [lon1, lat1] = ol.proj.transform([lon1, lat1], "EPSG:4326", "EPSG:3857");
+                    [lon2, lat2] = ol.proj.transform([lon2, lat2], "EPSG:4326", "EPSG:3857");
+                    let extent = <ol.Extent>[lon1, lat1, lon2, lat2];
+
+                    let feature = new ol.Feature(new ol.geom.Polygon([[
+                        ol.extent.getBottomLeft(extent),
+                        ol.extent.getTopLeft(extent),
+                        ol.extent.getTopRight(extent),
+                        ol.extent.getBottomRight(extent),
+                        ol.extent.getBottomLeft(extent)
+                    ]]));
+
+                    feature.set("text", r.original.display_name);
+                    options.source && options.source.addFeature(feature);
+                    zoomToFeature(options.map, feature);
+                } else {
+                    let [lon, lat] = ol.proj.transform([r.lon, r.lat], "EPSG:4326", "EPSG:3857");
+                    let feature = new ol.Feature(new ol.geom.Point([lon, lat]));
+                    feature.set("text", r.original.display_name);
+                    options.source && options.source.addFeature(feature);
+                    zoomToFeature(options.map, feature);
+                }
+                return true;
+            });
+        }).fail(() => {
+            console.error("geocoder failed");
+        });
+
+    };
+
+    return changeHandler;
+}
+
+export interface InputOptions extends olx.control.ControlOptions {
+    map?: ol.Map;
     // what css class name to assign to the main element
     className?: string;
     expanded?: boolean;
@@ -113,12 +178,12 @@ export interface IOptions {
     canCollapse?: boolean;
     closedText?: string;
     openedText?: string;
-    source?: HTMLElement;
     target?: HTMLElement;
     regex?: RegExp;
     // what to show on the tooltip
     placeholderText?: string;
-    onChange?: (args: { value: string }) => void;
+    provider?: typeof OpenStreet;
+    source?: ol.source.Vector;
 }
 
 const expando = {
@@ -126,24 +191,25 @@ const expando = {
     left: '«'
 };
 
-const defaults: IOptions = {
-    className: 'ol-input bottom left',
-    expanded: false,
-    autoChange: false,
-    autoClear: false,
-    autoCollapse: true,
-    autoSelect: true,
-    canCollapse: true,
-    hideButton: false,
-    closedText: expando.right,
-    openedText: expando.left,
-    placeholderText: 'Search',
-    regex: /\S{2,}/
-};
-
 export class Input extends ol.control.Control {
 
-    static create(options?: IOptions): Input {
+    static DEFAULT_OPTIONS: InputOptions = {
+        className: 'ol-input bottom left',
+        expanded: false,
+        autoChange: false,
+        autoClear: false,
+        autoCollapse: true,
+        autoSelect: true,
+        canCollapse: true,
+        hideButton: false,
+        closedText: expando.right,
+        openedText: expando.left,
+        provider: OpenStreet,
+        placeholderText: 'Search',
+        regex: /\S{2,}/,
+    };
+
+    static create(options?: InputOptions): Input {
 
         cssin('ol-input', css);
 
@@ -154,7 +220,7 @@ export class Input extends ol.control.Control {
         }, options || {});
 
         // provide static defaults        
-        options = mixin(mixin({}, defaults), options);
+        options = mixin(mixin({}, Input.DEFAULT_OPTIONS), options);
 
         let element = document.createElement('div');
         element.className = `${options.className} ${olcss.CLASS_UNSELECTABLE} ${olcss.CLASS_CONTROL}`;
@@ -165,16 +231,20 @@ export class Input extends ol.control.Control {
             expanded: false
         }, options);
 
-        return new Input(geocoderOptions);
+        let input = new Input(geocoderOptions);
+
+        if (options.map) {
+            options.map.addControl(input);
+        }
+
+        return input;
     }
 
     button: HTMLButtonElement;
     input: HTMLInputElement;
+    options: InputOptions;
 
-    constructor(options: IOptions & {
-        element: HTMLElement;
-        target: HTMLElement;
-    }) {
+    constructor(options: InputOptions) {
 
         if (options.hideButton) {
             options.canCollapse = false;
@@ -186,6 +256,13 @@ export class Input extends ol.control.Control {
             element: options.element,
             target: options.target
         });
+
+        this.options = options;
+
+        // have a provider and a source, go for it!
+        if (options.provider && options.source) {
+            this.on("change", changeHandlerFactor(this));
+        }
 
         let button = this.button = document.createElement('button');
         button.setAttribute('type', 'button');
@@ -252,7 +329,6 @@ export class Input extends ol.control.Control {
             }
 
             this.dispatchEvent(args);
-            if (options.onChange) options.onChange(args);
         });
 
         if (options.autoSelect) {
@@ -264,7 +340,7 @@ export class Input extends ol.control.Control {
         options.expanded ? this.expand(options) : this.collapse(options);
     }
 
-    collapse(options: IOptions) {
+    collapse(options: InputOptions) {
         if (!options.canCollapse) return;
         options.expanded = false;
         this.input.classList.toggle(olcss.CLASS_HIDDEN, true);
@@ -272,7 +348,7 @@ export class Input extends ol.control.Control {
         this.button.innerHTML = options.closedText;
     }
 
-    expand(options: IOptions) {
+    expand(options: InputOptions) {
         options.expanded = true;
         this.input.classList.toggle(olcss.CLASS_HIDDEN, false);
         this.button.classList.toggle(olcss.CLASS_HIDDEN, true);

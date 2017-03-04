@@ -4,25 +4,9 @@ import $ = require("jquery");
 import { Grid } from "ol3-grid";
 import { StyleConverter } from "ol3-symbolizer/ol3-symbolizer/format/ol3-symbolizer";
 import { Input } from "../ol3-input";
-import { OpenStreet } from "../providers/osm";
 import { cssin } from "ol3-fun/ol3-fun/common";
+import { zoomToFeature } from "ol3-fun/ol3-fun/navigation";
 import { ArcGisVectorSourceFactory } from "ol3-symbolizer/ol3-symbolizer/ags/ags-source";
-
-function zoomToFeature(map: ol.Map, feature: ol.Feature) {
-    let extent = feature.getGeometry().getExtent();
-    map.getView().animate({
-        center: ol.extent.getCenter(extent),
-        duration: 2500
-    });
-    let w1 = ol.extent.getWidth(map.getView().calculateExtent(map.getSize()));
-    let w2 = ol.extent.getWidth(extent);
-
-    map.getView().animate({
-        zoom: map.getView().getZoom() + Math.round(Math.log(w1 / w2) / Math.log(2)) - 1,
-        duration: 2500
-    });
-
-}
 
 export function run() {
 
@@ -70,7 +54,7 @@ table.ol-grid-table > td {
 }
     `);
 
-    let searchProvider = new OpenStreet();
+    let searchProvider = new Input.DEFAULT_OPTIONS.provider();
 
     let center = ol.proj.transform([-120, 35], 'EPSG:4326', 'EPSG:3857');
 
@@ -78,6 +62,7 @@ table.ol-grid-table > td {
 
     let map = new ol.Map({
         loadTilesWhileAnimating: true,
+        loadTilesWhileInteracting: true,
         target: mapContainer,
         layers: [
             new ol.layer.Tile({
@@ -162,14 +147,16 @@ table.ol-grid-table > td {
             map.addControl(grid);
 
             grid.on("feature-click", args => {
-                zoomToFeature(map, args.feature);
+                zoomToFeature(map, args.feature, { duration: 5000 });
             });
 
             grid.on("feature-hover", args => {
                 // TODO: highlight args.feature
             });
 
+            // search for a state using 2 character state code
             let input = Input.create({
+                map: map,
                 className: "ol-input statecode top left-2 ",
                 closedText: "+",
                 openedText: "−",
@@ -178,11 +165,13 @@ table.ol-grid-table > td {
                 autoClear: false,
                 autoCollapse: false,
                 placeholderText: "XX",
+                provider: null, // do not auto-search
                 regex: /^\w{2}$/m
             });
             input.input.maxLength = 2;
 
-            map.addControl(input);
+            // search existing features for STATE_ABBR, zoom to first one found
+            // if none found, invoke change handler
             input.on("change", args => {
                 let value = args.value.toLocaleLowerCase();
                 let feature = layer.getSource().forEachFeature(feature => {
@@ -268,24 +257,32 @@ table.ol-grid-table > td {
 
     };
 
-    map.addControl(Input.create({
-        className: 'ol-input bottom-2 right',
-        expanded: true,
-        placeholderText: "Bottom Right Search",
-        onChange: changeHandler
-    }));
+    // always perform a new search using default provider
+    Input.create({
+        map: map,
+        //className: 'ol-input bottom-2 right',
+        //expanded: true,
+        placeholderText: "Default Handler",
+        source: source // render result here
+    });
 
-    map.addControl(Input.create({
-        className: 'ol-input top right',
-        expanded: true,
-        openedText: "?",
-        placeholderText: "Feature Finder",
-        autoClear: true,
-        autoCollapse: false,
-        canCollapse: false,
-        hideButton: true,
-        autoChange: true,
-        onChange: args => {
+    // Search the 'text' attribute of existing features and center
+    // on feature, otherwise perform outside search via change handler
+    Input
+        .create({
+            map: map,
+            className: 'ol-input top right',
+            expanded: true,
+            openedText: "?",
+            placeholderText: "Search (text)",
+            autoClear: true,
+            autoCollapse: false,
+            canCollapse: false,
+            hideButton: true,
+            autoChange: true,
+            provider: null // prevent using default provider
+        })
+        .on("change", args => {
             let value = args.value.toLocaleLowerCase();
             let feature = source.forEachFeature(feature => {
                 let text = <string>feature.get("text");
@@ -302,7 +299,6 @@ table.ol-grid-table > td {
             } else {
                 changeHandler({ value: value });
             }
-        }
-    }));
+        });
 
 }
