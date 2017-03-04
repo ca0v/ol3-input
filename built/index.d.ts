@@ -6,16 +6,105 @@ declare module "bower_components/ol3-fun/ol3-fun/common" {
     export function mixin<A extends any, B extends any>(a: A, b: B): A & B;
     export function defaults<A extends any, B extends any>(a: A, ...b: B[]): A & B;
     export function cssin(name: string, css: string): () => void;
-    export function debounce(func: () => void, wait?: number): () => void;
+    export function debounce<T extends Function>(func: T, wait?: number, immediate?: boolean): T;
     /**
      * poor $(html) substitute due to being
      * unable to create <td>, <tr> elements
      */
     export function html(html: string): HTMLElement;
+    export function range(n: number): any[];
+    export function shuffle<T>(array: T[]): T[];
+}
+declare module "bower_components/ol3-fun/ol3-fun/navigation" {
+    import ol = require("openlayers");
+    /**
+     * A less disorienting way of changing the maps extent (maybe!)
+     * Zoom out until new feature is visible
+     * Zoom to that feature
+     */
+    export function zoomToFeature(map: ol.Map, feature: ol.Feature, options?: {
+        duration?: number;
+        padding?: number;
+        minResolution?: number;
+    }): void;
+}
+declare module "ol3-input/providers/osm" {
+    export module OpenStreet {
+        interface Address {
+            road: string;
+            state: string;
+            country: string;
+        }
+        interface Address {
+            neighbourhood: string;
+            postcode: string;
+            city: string;
+            town: string;
+        }
+        interface Address {
+            peak: string;
+            county: string;
+            country_code: string;
+            sports_centre: string;
+        }
+        interface ResponseItem {
+            place_id: string;
+            licence: string;
+            osm_type: string;
+            osm_id: string;
+            boundingbox: string[];
+            lat: string;
+            lon: string;
+            display_name: string;
+            class: string;
+            type: string;
+            importance: number;
+            icon: string;
+            address: Address;
+        }
+        type Response = ResponseItem[];
+    }
+    export interface Result<T> {
+        lon: number;
+        lat: number;
+        address: {
+            name: string;
+            road: string;
+            postcode: string;
+            city: string;
+            state: string;
+            country: string;
+        };
+        original: T;
+    }
+    export class OpenStreet {
+        dataType: string;
+        method: string;
+        private settings;
+        getParameters(options: {
+            query: string;
+            limit: number;
+            countrycodes: string;
+            lang: string;
+        }): {
+            url: string;
+            params: {
+                q: string;
+                format: string;
+                addressdetails: number;
+                limit: number;
+                countrycodes: string;
+                'accept-language': string;
+            };
+        };
+        handleResponse(args: OpenStreet.Response): Result<OpenStreet.ResponseItem>[];
+    }
 }
 declare module "ol3-input/ol3-input" {
     import ol = require("openlayers");
-    export interface IOptions {
+    import { OpenStreet } from "ol3-input/providers/osm";
+    export interface InputOptions extends olx.control.ControlOptions {
+        map?: ol.Map;
         className?: string;
         expanded?: boolean;
         hideButton?: boolean;
@@ -26,24 +115,21 @@ declare module "ol3-input/ol3-input" {
         canCollapse?: boolean;
         closedText?: string;
         openedText?: string;
-        source?: HTMLElement;
         target?: HTMLElement;
         regex?: RegExp;
         placeholderText?: string;
-        onChange?: (args: {
-            value: string;
-        }) => void;
+        provider?: typeof OpenStreet;
+        source?: ol.source.Vector;
     }
     export class Input extends ol.control.Control {
-        static create(options?: IOptions): Input;
+        static DEFAULT_OPTIONS: InputOptions;
+        static create(options?: InputOptions): Input;
         button: HTMLButtonElement;
         input: HTMLInputElement;
-        constructor(options: IOptions & {
-            element: HTMLElement;
-            target: HTMLElement;
-        });
-        collapse(options: IOptions): void;
-        expand(options: IOptions): void;
+        options: InputOptions;
+        constructor(options: InputOptions);
+        collapse(options: InputOptions): void;
+        expand(options: InputOptions): void;
         on(type: string, cb: Function): any;
         on(type: "change", cb: (args: {
             type: string;
@@ -258,78 +344,6 @@ declare module "bower_components/ol3-symbolizer/ol3-symbolizer/format/ol3-symbol
         private deserializeColor(fill);
         private deserializeLinearGradient(json);
         private deserializeRadialGradient(json);
-    }
-}
-declare module "ol3-input/providers/osm" {
-    export module OpenStreet {
-        interface Address {
-            road: string;
-            state: string;
-            country: string;
-        }
-        interface Address {
-            neighbourhood: string;
-            postcode: string;
-            city: string;
-            town: string;
-        }
-        interface Address {
-            peak: string;
-            county: string;
-            country_code: string;
-            sports_centre: string;
-        }
-        interface ResponseItem {
-            place_id: string;
-            licence: string;
-            osm_type: string;
-            osm_id: string;
-            boundingbox: string[];
-            lat: string;
-            lon: string;
-            display_name: string;
-            class: string;
-            type: string;
-            importance: number;
-            icon: string;
-            address: Address;
-        }
-        type Response = ResponseItem[];
-    }
-    export interface Result<T> {
-        lon: number;
-        lat: number;
-        address: {
-            name: string;
-            road: string;
-            postcode: string;
-            city: string;
-            state: string;
-            country: string;
-        };
-        original: T;
-    }
-    export class OpenStreet {
-        dataType: string;
-        method: string;
-        private settings;
-        getParameters(options: {
-            query: string;
-            limit: number;
-            countrycodes: string;
-            lang: string;
-        }): {
-            url: string;
-            params: {
-                q: string;
-                format: string;
-                addressdetails: number;
-                limit: number;
-                countrycodes: string;
-                'accept-language': string;
-            };
-        };
-        handleResponse(args: OpenStreet.Response): Result<OpenStreet.ResponseItem>[];
     }
 }
 declare module "bower_components/ol3-symbolizer/ol3-symbolizer/common/ajax" {

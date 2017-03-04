@@ -81,13 +81,27 @@ define("bower_components/ol3-fun/ol3-fun/common", ["require", "exports"], functi
         };
     }
     exports.cssin = cssin;
-    function debounce(func, wait) {
+    function debounce(func, wait, immediate) {
+        var _this = this;
         if (wait === void 0) { wait = 50; }
-        var h;
-        return function () {
-            clearTimeout(h);
-            h = setTimeout(function () { return func(); }, wait);
-        };
+        if (immediate === void 0) { immediate = false; }
+        var timeout;
+        return (function () {
+            var args = [];
+            for (var _i = 0; _i < arguments.length; _i++) {
+                args[_i] = arguments[_i];
+            }
+            var later = function () {
+                timeout = null;
+                if (!immediate)
+                    func.apply(_this, args);
+            };
+            var callNow = immediate && !timeout;
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+            if (callNow)
+                func.call(_this, args);
+        });
     }
     exports.debounce = debounce;
     /**
@@ -104,8 +118,132 @@ define("bower_components/ol3-fun/ol3-fun/common", ["require", "exports"], functi
         return b.firstElementChild;
     }
     exports.html = html;
+    function range(n) {
+        var result = new Array(n);
+        for (var i = 0; i < n; i++)
+            result[i] = i;
+        return result;
+    }
+    exports.range = range;
+    // http://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
+    function shuffle(array) {
+        var currentIndex = array.length;
+        var temporaryValue;
+        var randomIndex;
+        // While there remain elements to shuffle...
+        while (0 !== currentIndex) {
+            // Pick a remaining element...
+            randomIndex = Math.floor(Math.random() * currentIndex);
+            currentIndex -= 1;
+            // And swap it with the current element.
+            temporaryValue = array[currentIndex];
+            array[currentIndex] = array[randomIndex];
+            array[randomIndex] = temporaryValue;
+        }
+        return array;
+    }
+    exports.shuffle = shuffle;
 });
-define("ol3-input/ol3-input", ["require", "exports", "openlayers", "bower_components/ol3-fun/ol3-fun/common"], function (require, exports, ol, common_1) {
+define("bower_components/ol3-fun/ol3-fun/navigation", ["require", "exports", "openlayers", "bower_components/ol3-fun/ol3-fun/common"], function (require, exports, ol, common_1) {
+    "use strict";
+    /**
+     * A less disorienting way of changing the maps extent (maybe!)
+     * Zoom out until new feature is visible
+     * Zoom to that feature
+     */
+    function zoomToFeature(map, feature, options) {
+        options = common_1.defaults(options || {}, {
+            duration: 1000,
+            padding: 256,
+            minResolution: 2 * map.getView().getMinResolution()
+        });
+        var view = map.getView();
+        var currentExtent = view.calculateExtent(map.getSize());
+        var targetExtent = feature.getGeometry().getExtent();
+        var doit = function (duration) {
+            view.fit(targetExtent, map.getSize(), {
+                padding: [options.padding, options.padding, options.padding, options.padding],
+                minResolution: options.minResolution,
+                duration: duration
+            });
+        };
+        if (ol.extent.containsExtent(currentExtent, targetExtent)) {
+            // new extent is contained within current extent, pan and zoom in
+            doit(options.duration);
+        }
+        else if (ol.extent.containsExtent(currentExtent, targetExtent)) {
+            // new extent is contained within current extent, pan and zoom out
+            doit(options.duration);
+        }
+        else {
+            // zoom out until target extent is in view
+            var fullExtent = ol.extent.createEmpty();
+            ol.extent.extend(fullExtent, currentExtent);
+            ol.extent.extend(fullExtent, targetExtent);
+            var dscale = ol.extent.getWidth(fullExtent) / ol.extent.getWidth(currentExtent);
+            var duration = 0.5 * options.duration;
+            view.fit(fullExtent, map.getSize(), {
+                padding: [options.padding, options.padding, options.padding, options.padding],
+                minResolution: options.minResolution,
+                duration: duration
+            });
+            setTimeout(function () { return doit(0.5 * options.duration); }, duration);
+        }
+    }
+    exports.zoomToFeature = zoomToFeature;
+});
+// https://github.com/jonataswalker/ol3-geocoder/blob/master/src/js/providers/osm.js
+define("ol3-input/providers/osm", ["require", "exports"], function (require, exports) {
+    "use strict";
+    var OpenStreet = (function () {
+        function OpenStreet() {
+            this.dataType = 'json';
+            this.method = 'GET';
+            this.settings = {
+                url: '//nominatim.openstreetmap.org/search/',
+                params: {
+                    q: '',
+                    format: 'json',
+                    addressdetails: 1,
+                    limit: 10,
+                    countrycodes: '',
+                    'accept-language': 'en-US'
+                }
+            };
+        }
+        OpenStreet.prototype.getParameters = function (options) {
+            return {
+                url: this.settings.url,
+                params: {
+                    q: options.query,
+                    format: 'json',
+                    addressdetails: 1,
+                    limit: options.limit || this.settings.params.limit,
+                    countrycodes: options.countrycodes || this.settings.params.countrycodes,
+                    'accept-language': options.lang || this.settings.params['accept-language']
+                }
+            };
+        };
+        OpenStreet.prototype.handleResponse = function (args) {
+            return args.sort(function (v) { return v.importance || 1; }).map(function (result) { return ({
+                original: result,
+                lon: parseFloat(result.lon),
+                lat: parseFloat(result.lat),
+                address: {
+                    name: result.address.neighbourhood || '',
+                    road: result.address.road || '',
+                    postcode: result.address.postcode,
+                    city: result.address.city || result.address.town,
+                    state: result.address.state,
+                    country: result.address.country
+                }
+            }); });
+        };
+        return OpenStreet;
+    }());
+    exports.OpenStreet = OpenStreet;
+});
+define("ol3-input/ol3-input", ["require", "exports", "openlayers", "jquery", "bower_components/ol3-fun/ol3-fun/common", "bower_components/ol3-fun/ol3-fun/navigation", "ol3-input/providers/osm"], function (require, exports, ol, $, common_2, navigation_1, osm_1) {
     "use strict";
     var css = "\n    .ol-input {\n        position:absolute;\n    }\n    .ol-input.top {\n        top: 0.5em;\n    }\n    .ol-input.top-1 {\n        top: 1.5em;\n    }\n    .ol-input.top-2 {\n        top: 2.5em;\n    }\n    .ol-input.top-3 {\n        top: 3.5em;\n    }\n    .ol-input.top-4 {\n        top: 4.5em;\n    }\n    .ol-input.left {\n        left: 0.5em;\n    }\n    .ol-input.left-1 {\n        left: 1.5em;\n    }\n    .ol-input.left-2 {\n        left: 2.5em;\n    }\n    .ol-input.left-3 {\n        left: 3.5em;\n    }\n    .ol-input.left-4 {\n        left: 4.5em;\n    }\n    .ol-input.bottom {\n        bottom: 0.5em;\n    }\n    .ol-input.bottom-1 {\n        bottom: 1.5em;\n    }\n    .ol-input.bottom-2 {\n        bottom: 2.5em;\n    }\n    .ol-input.bottom-3 {\n        bottom: 3.5em;\n    }\n    .ol-input.bottom-4 {\n        bottom: 4.5em;\n    }\n    .ol-input.right {\n        right: 0.5em;\n    }\n    .ol-input.right-1 {\n        right: 1.5em;\n    }\n    .ol-input.right-2 {\n        right: 2.5em;\n    }\n    .ol-input.right-3 {\n        right: 3.5em;\n    }\n    .ol-input.right-4 {\n        right: 4.5em;\n    }\n    .ol-input button {\n        min-height: 1.375em;\n        min-width: 1.375em;\n        width: auto;\n        display: inline;\n    }\n    .ol-input.left button {\n        float:right;\n    }\n    .ol-input.right button {\n        float:left;\n    }\n    .ol-input input {\n        height: 2.175em;\n        width: 16em;\n        border: none;\n        padding: 0;\n        margin: 0;\n        margin-left: 2px;\n        margin-top: 2px;\n        vertical-align: top;\n        transition: width 0.25s;\n    }\n    .ol-input input.ol-hidden {\n        width: 0;\n        margin: 0;\n    }\n";
     var olcss = {
@@ -114,23 +252,63 @@ define("ol3-input/ol3-input", ["require", "exports", "openlayers", "bower_compon
         CLASS_UNSUPPORTED: 'ol-unsupported',
         CLASS_HIDDEN: 'ol-hidden'
     };
+    function changeHandlerFactor(input) {
+        var options = input.options;
+        var searchProvider = new osm_1.OpenStreet();
+        var changeHandler = function (args) {
+            if (!args.value)
+                return;
+            console.log("search", args.value);
+            var searchArgs = searchProvider.getParameters({
+                query: args.value,
+                limit: 1,
+                countrycodes: 'us',
+                lang: 'en'
+            });
+            $.ajax({
+                url: searchArgs.url,
+                method: searchProvider.method || 'GET',
+                data: searchArgs.params,
+                dataType: searchProvider.dataType || 'json'
+            }).then(function (json) {
+                var results = searchProvider.handleResponse(json);
+                results.some(function (r) {
+                    console.log(r);
+                    if (r.original.boundingbox) {
+                        var _a = r.original.boundingbox.map(function (v) { return parseFloat(v); }), lat1 = _a[0], lat2 = _a[1], lon1 = _a[2], lon2 = _a[3];
+                        _b = ol.proj.transform([lon1, lat1], "EPSG:4326", "EPSG:3857"), lon1 = _b[0], lat1 = _b[1];
+                        _c = ol.proj.transform([lon2, lat2], "EPSG:4326", "EPSG:3857"), lon2 = _c[0], lat2 = _c[1];
+                        var extent = [lon1, lat1, lon2, lat2];
+                        var feature = new ol.Feature(new ol.geom.Polygon([[
+                                ol.extent.getBottomLeft(extent),
+                                ol.extent.getTopLeft(extent),
+                                ol.extent.getTopRight(extent),
+                                ol.extent.getBottomRight(extent),
+                                ol.extent.getBottomLeft(extent)
+                            ]]));
+                        feature.set("text", r.original.display_name);
+                        options.source && options.source.addFeature(feature);
+                        navigation_1.zoomToFeature(options.map, feature);
+                    }
+                    else {
+                        var _d = ol.proj.transform([r.lon, r.lat], "EPSG:4326", "EPSG:3857"), lon = _d[0], lat = _d[1];
+                        var feature = new ol.Feature(new ol.geom.Point([lon, lat]));
+                        feature.set("text", r.original.display_name);
+                        options.source && options.source.addFeature(feature);
+                        navigation_1.zoomToFeature(options.map, feature);
+                    }
+                    return true;
+                    var _b, _c;
+                });
+            }).fail(function () {
+                console.error("geocoder failed");
+            });
+        };
+        return changeHandler;
+    }
     var expando = {
         right: '»',
         left: '«'
-    };
-    var defaults = {
-        className: 'ol-input bottom left',
-        expanded: false,
-        autoChange: false,
-        autoClear: false,
-        autoCollapse: true,
-        autoSelect: true,
-        canCollapse: true,
-        hideButton: false,
-        closedText: expando.right,
-        openedText: expando.left,
-        placeholderText: 'Search',
-        regex: /\S{2,}/
     };
     var Input = (function (_super) {
         __extends(Input, _super);
@@ -145,6 +323,11 @@ define("ol3-input/ol3-input", ["require", "exports", "openlayers", "bower_compon
                 element: options.element,
                 target: options.target
             }) || this;
+            _this.options = options;
+            // have a provider and a source, go for it!
+            if (options.provider && options.source) {
+                _this.on("change", changeHandlerFactor(_this));
+            }
             var button = _this.button = document.createElement('button');
             button.setAttribute('type', 'button');
             button.title = options.placeholderText;
@@ -172,7 +355,7 @@ define("ol3-input/ol3-input", ["require", "exports", "openlayers", "bower_compon
                 }
             });
             if (options.autoChange) {
-                input.addEventListener("keypress", common_1.debounce(function () {
+                input.addEventListener("keypress", common_2.debounce(function () {
                     if (options.regex && !options.regex.test(input.value))
                         return;
                     var args = {
@@ -195,8 +378,6 @@ define("ol3-input/ol3-input", ["require", "exports", "openlayers", "bower_compon
                     input.value = "";
                 }
                 _this.dispatchEvent(args);
-                if (options.onChange)
-                    options.onChange(args);
             });
             if (options.autoSelect) {
                 input.addEventListener("focus", function () {
@@ -207,22 +388,26 @@ define("ol3-input/ol3-input", ["require", "exports", "openlayers", "bower_compon
             return _this;
         }
         Input.create = function (options) {
-            common_1.cssin('ol-input', css);
+            common_2.cssin('ol-input', css);
             // provide computed defaults        
-            options = common_1.mixin({
+            options = common_2.mixin({
                 openedText: options.className && -1 < options.className.indexOf("left") ? expando.left : expando.right,
                 closedText: options.className && -1 < options.className.indexOf("left") ? expando.right : expando.left,
             }, options || {});
             // provide static defaults        
-            options = common_1.mixin(common_1.mixin({}, defaults), options);
+            options = common_2.mixin(common_2.mixin({}, Input.DEFAULT_OPTIONS), options);
             var element = document.createElement('div');
             element.className = options.className + " " + olcss.CLASS_UNSELECTABLE + " " + olcss.CLASS_CONTROL;
-            var geocoderOptions = common_1.mixin({
+            var geocoderOptions = common_2.mixin({
                 element: element,
                 target: options.target,
                 expanded: false
             }, options);
-            return new Input(geocoderOptions);
+            var input = new Input(geocoderOptions);
+            if (options.map) {
+                options.map.addControl(input);
+            }
+            return input;
         };
         Input.prototype.collapse = function (options) {
             if (!options.canCollapse)
@@ -245,6 +430,21 @@ define("ol3-input/ol3-input", ["require", "exports", "openlayers", "bower_compon
         };
         return Input;
     }(ol.control.Control));
+    Input.DEFAULT_OPTIONS = {
+        className: 'ol-input bottom left',
+        expanded: false,
+        autoChange: false,
+        autoClear: false,
+        autoCollapse: true,
+        autoSelect: true,
+        canCollapse: true,
+        hideButton: false,
+        closedText: expando.right,
+        openedText: expando.left,
+        provider: osm_1.OpenStreet,
+        placeholderText: 'Search',
+        regex: /\S{2,}/,
+    };
     exports.Input = Input;
 });
 define("index", ["require", "exports", "ol3-input/ol3-input"], function (require, exports, Input) {
@@ -274,6 +474,25 @@ define("ol3-input/examples/index", ["require", "exports"], function (require, ex
 });
 define("bower_components/ol3-fun/ol3-fun/snapshot", ["require", "exports", "openlayers"], function (require, exports, ol) {
     "use strict";
+    function getStyle(feature) {
+        var style = feature.getStyle();
+        if (!style) {
+            var styleFn = feature.getStyleFunction();
+            if (styleFn) {
+                style = styleFn(0);
+            }
+        }
+        if (!style) {
+            style = new ol.style.Style({
+                text: new ol.style.Text({
+                    text: "?"
+                })
+            });
+        }
+        if (!Array.isArray(style))
+            style = [style];
+        return style;
+    }
     var Snapshot = (function () {
         function Snapshot() {
         }
@@ -288,7 +507,7 @@ define("bower_components/ol3-fun/ol3-fun/snapshot", ["require", "exports", "open
             geom.scale(scale, -scale);
             geom.translate(canvas.width / 2, canvas.height / 2);
             var vtx = ol.render.toContext(canvas.getContext("2d"));
-            var styles = feature.getStyleFunction()(0);
+            var styles = getStyle(feature);
             if (!Array.isArray(styles))
                 styles = [styles];
             styles.forEach(function (style) { return vtx.drawFeature(feature, style); });
@@ -306,7 +525,7 @@ define("bower_components/ol3-fun/ol3-fun/snapshot", ["require", "exports", "open
     }());
     return Snapshot;
 });
-define("bower_components/ol3-grid/ol3-grid/ol3-grid", ["require", "exports", "openlayers", "bower_components/ol3-fun/ol3-fun/common", "bower_components/ol3-fun/ol3-fun/snapshot"], function (require, exports, ol, common_2, Snapshot) {
+define("bower_components/ol3-grid/ol3-grid/ol3-grid", ["require", "exports", "openlayers", "bower_components/ol3-fun/ol3-fun/common", "bower_components/ol3-fun/ol3-fun/snapshot"], function (require, exports, ol, common_3, Snapshot) {
     "use strict";
     var css = "\n    .ol-grid {\n        position:absolute;\n    }\n    .ol-grid.top {\n        top: 0.5em;\n    }\n    .ol-grid.top-1 {\n        top: 1.5em;\n    }\n    .ol-grid.top-2 {\n        top: 2.5em;\n    }\n    .ol-grid.top-3 {\n        top: 3.5em;\n    }\n    .ol-grid.top-4 {\n        top: 4.5em;\n    }\n    .ol-grid.left {\n        left: 0.5em;\n    }\n    .ol-grid.left-1 {\n        left: 1.5em;\n    }\n    .ol-grid.left-2 {\n        left: 2.5em;\n    }\n    .ol-grid.left-3 {\n        left: 3.5em;\n    }\n    .ol-grid.left-4 {\n        left: 4.5em;\n    }\n    .ol-grid.bottom {\n        bottom: 0.5em;\n    }\n    .ol-grid.bottom-1 {\n        bottom: 1.5em;\n    }\n    .ol-grid.bottom-2 {\n        bottom: 2.5em;\n    }\n    .ol-grid.bottom-3 {\n        bottom: 3.5em;\n    }\n    .ol-grid.bottom-4 {\n        bottom: 4.5em;\n    }\n    .ol-grid.right {\n        right: 0.5em;\n    }\n    .ol-grid.right-1 {\n        right: 1.5em;\n    }\n    .ol-grid.right-2 {\n        right: 2.5em;\n    }\n    .ol-grid.right-3 {\n        right: 3.5em;\n    }\n    .ol-grid.right-4 {\n        right: 4.5em;\n    }\n    .ol-grid .ol-grid-container {\n        max-height: 16em;\n        overflow-y: auto;\n    }\n    .ol-grid .ol-grid-container.ol-hidden {\n        display: none;\n    }\n    .ol-grid .feature-row {\n        cursor: pointer;\n    }\n    .ol-grid .feature-row:hover {\n        background: black;\n        color: white;\n    }\n    .ol-grid .feature-row:focus {\n        background: #ccc;\n        color: black;\n    }\n";
     var grid_html = "\n<div class='ol-grid-container'>\n    <table class='ol-grid-table'>\n        <tbody><tr><td/></tr></tbody>\n    </table>\n</div>\n";
@@ -356,7 +575,7 @@ define("bower_components/ol3-grid/ol3-grid/ol3-grid", ["require", "exports", "op
             if (options.hideButton) {
                 button.style.display = "none";
             }
-            var grid = common_2.html(grid_html.trim());
+            var grid = common_3.html(grid_html.trim());
             _this.grid = grid.getElementsByClassName("ol-grid-table")[0];
             options.element.appendChild(grid);
             if (_this.options.autoCollapse) {
@@ -375,22 +594,22 @@ define("bower_components/ol3-grid/ol3-grid/ol3-grid", ["require", "exports", "op
             });
             options.expanded ? _this.expand() : _this.collapse();
             // render
-            _this.features.on(["addfeature", "addfeatures"], common_2.debounce(function () { return _this.redraw(); }));
+            _this.features.on(["addfeature", "addfeatures"], common_3.debounce(function () { return _this.redraw(); }));
             return _this;
         }
         Grid.create = function (options) {
             if (options === void 0) { options = {}; }
-            common_2.cssin('ol-grid', css);
+            common_3.cssin('ol-grid', css);
             // provide computed defaults        
-            options = common_2.mixin({
+            options = common_3.mixin({
                 openedText: options.className && -1 < options.className.indexOf("left") ? expando.left : expando.right,
                 closedText: options.className && -1 < options.className.indexOf("left") ? expando.right : expando.left,
             }, options || {});
             // provide static defaults        
-            options = common_2.mixin(common_2.mixin({}, defaults), options);
+            options = common_3.mixin(common_3.mixin({}, defaults), options);
             var element = document.createElement('div');
             element.className = options.className + " " + olcss.CLASS_UNSELECTABLE + " " + olcss.CLASS_CONTROL;
-            var gridOptions = common_2.mixin({
+            var gridOptions = common_3.mixin({
                 element: element,
                 expanded: false
             }, options);
@@ -425,7 +644,7 @@ define("bower_components/ol3-grid/ol3-grid/ol3-grid", ["require", "exports", "op
                 }
                 if (_this.options.labelAttributeName) {
                     var td = document.createElement("td");
-                    var label = common_2.html("<label class=\"label\">" + feature.get(_this.options.labelAttributeName) + "</label>");
+                    var label = common_3.html("<label class=\"label\">" + feature.get(_this.options.labelAttributeName) + "</label>");
                     td.appendChild(label);
                     tr.appendChild(td);
                 }
@@ -466,7 +685,7 @@ define("bower_components/ol3-grid/ol3-grid/ol3-grid", ["require", "exports", "op
             var _this = this;
             _super.prototype.setMap.call(this, map);
             if (this.options.currentExtent) {
-                map.getView().on(["change:center", "change:resolution"], common_2.debounce(function () { return _this.redraw(); }));
+                map.getView().on(["change:center", "change:resolution"], common_3.debounce(function () { return _this.redraw(); }));
             }
             if (this.options.layers) {
                 this.options.layers.forEach(function (l) { return l.getSource().on("addfeature", function (args) {
@@ -953,57 +1172,6 @@ define("bower_components/ol3-symbolizer/ol3-symbolizer/format/ol3-symbolizer", [
         return StyleConverter;
     }());
     exports.StyleConverter = StyleConverter;
-});
-// https://github.com/jonataswalker/ol3-geocoder/blob/master/src/js/providers/osm.js
-define("ol3-input/providers/osm", ["require", "exports"], function (require, exports) {
-    "use strict";
-    var OpenStreet = (function () {
-        function OpenStreet() {
-            this.dataType = 'json';
-            this.method = 'GET';
-            this.settings = {
-                url: '//nominatim.openstreetmap.org/search/',
-                params: {
-                    q: '',
-                    format: 'json',
-                    addressdetails: 1,
-                    limit: 10,
-                    countrycodes: '',
-                    'accept-language': 'en-US'
-                }
-            };
-        }
-        OpenStreet.prototype.getParameters = function (options) {
-            return {
-                url: this.settings.url,
-                params: {
-                    q: options.query,
-                    format: 'json',
-                    addressdetails: 1,
-                    limit: options.limit || this.settings.params.limit,
-                    countrycodes: options.countrycodes || this.settings.params.countrycodes,
-                    'accept-language': options.lang || this.settings.params['accept-language']
-                }
-            };
-        };
-        OpenStreet.prototype.handleResponse = function (args) {
-            return args.sort(function (v) { return v.importance || 1; }).map(function (result) { return ({
-                original: result,
-                lon: parseFloat(result.lon),
-                lat: parseFloat(result.lat),
-                address: {
-                    name: result.address.neighbourhood || '',
-                    road: result.address.road || '',
-                    postcode: result.address.postcode,
-                    city: result.address.city || result.address.town,
-                    state: result.address.state,
-                    country: result.address.country
-                }
-            }); });
-        };
-        return OpenStreet;
-    }());
-    exports.OpenStreet = OpenStreet;
 });
 define("bower_components/ol3-symbolizer/ol3-symbolizer/common/ajax", ["require", "exports", "jquery"], function (require, exports, $) {
     "use strict";
@@ -1502,7 +1670,7 @@ define("bower_components/ol3-symbolizer/ol3-symbolizer/common/common", ["require
  * It will make use the map SRS and the resulttype="tile" and exceededTransferLimit
  * See https://github.com/ca0v/ol3-lab/issues/4
  */
-define("bower_components/ol3-symbolizer/ol3-symbolizer/ags/ags-source", ["require", "exports", "jquery", "openlayers", "bower_components/ol3-symbolizer/ol3-symbolizer/ags/ags-catalog", "bower_components/ol3-symbolizer/ol3-symbolizer/format/ags-symbolizer", "bower_components/ol3-symbolizer/ol3-symbolizer/common/common"], function (require, exports, $, ol, AgsCatalog, Symbolizer, common_3) {
+define("bower_components/ol3-symbolizer/ol3-symbolizer/ags/ags-source", ["require", "exports", "jquery", "openlayers", "bower_components/ol3-symbolizer/ol3-symbolizer/ags/ags-catalog", "bower_components/ol3-symbolizer/ol3-symbolizer/format/ags-symbolizer", "bower_components/ol3-symbolizer/ol3-symbolizer/common/common"], function (require, exports, $, ol, AgsCatalog, Symbolizer, common_4) {
     "use strict";
     var esrijsonFormat = new ol.format.EsriJSON();
     function asParam(options) {
@@ -1521,7 +1689,7 @@ define("bower_components/ol3-symbolizer/ol3-symbolizer/ags/ags-source", ["requir
         }
         ArcGisVectorSourceFactory.create = function (options) {
             var d = $.Deferred();
-            options = common_3.defaults(options, DEFAULT_OPTIONS);
+            options = common_4.defaults(options, DEFAULT_OPTIONS);
             var srs = options.map.getView()
                 .getProjection()
                 .getCode()
@@ -1611,28 +1779,16 @@ define("bower_components/ol3-symbolizer/ol3-symbolizer/ags/ags-source", ["requir
     }());
     exports.ArcGisVectorSourceFactory = ArcGisVectorSourceFactory;
 });
-define("ol3-input/examples/ol3-input", ["require", "exports", "openlayers", "jquery", "bower_components/ol3-grid/index", "bower_components/ol3-symbolizer/ol3-symbolizer/format/ol3-symbolizer", "ol3-input/ol3-input", "ol3-input/providers/osm", "bower_components/ol3-fun/ol3-fun/common", "bower_components/ol3-symbolizer/ol3-symbolizer/ags/ags-source"], function (require, exports, ol, $, ol3_grid_1, ol3_symbolizer_1, ol3_input_1, osm_1, common_4, ags_source_1) {
+define("ol3-input/examples/ol3-input", ["require", "exports", "openlayers", "jquery", "bower_components/ol3-grid/index", "bower_components/ol3-symbolizer/ol3-symbolizer/format/ol3-symbolizer", "ol3-input/ol3-input", "bower_components/ol3-fun/ol3-fun/common", "bower_components/ol3-fun/ol3-fun/navigation", "bower_components/ol3-symbolizer/ol3-symbolizer/ags/ags-source"], function (require, exports, ol, $, ol3_grid_1, ol3_symbolizer_1, ol3_input_1, common_5, navigation_2, ags_source_1) {
     "use strict";
-    function zoomToFeature(map, feature) {
-        var extent = feature.getGeometry().getExtent();
-        map.getView().animate({
-            center: ol.extent.getCenter(extent),
-            duration: 2500
-        });
-        var w1 = ol.extent.getWidth(map.getView().calculateExtent(map.getSize()));
-        var w2 = ol.extent.getWidth(extent);
-        map.getView().animate({
-            zoom: map.getView().getZoom() + Math.round(Math.log(w1 / w2) / Math.log(2)) - 1,
-            duration: 2500
-        });
-    }
     function run() {
-        common_4.cssin("examples/ol3-input", "\n\n.ol-grid.statecode .ol-grid-container {\n    background-color: white;\n    width: 10em;\n}\n\n.ol-grid .ol-grid-container.ol-hidden {\n}\n\n.ol-grid .ol-grid-container {\n    width: 15em;\n}\n\n.ol-input.top.right > input {\n    width: 18em;\n}\n\n.ol-grid-table {\n    width: 100%;\n}\n\ntable.ol-grid-table {\n    border-collapse: collapse;\n    width: 100%;\n}\n\ntable.ol-grid-table > td {\n    padding: 8px;\n    text-align: left;\n    border-bottom: 1px solid #ddd;\n}\n\n.ol-input input {\n    height: 1.75em !important;\n}\n\n.ol-input.statecode > input {\n    text-transform: uppercase;\n    width: 2em;\n    text-align: center;\n}\n    ");
-        var searchProvider = new osm_1.OpenStreet();
+        common_5.cssin("examples/ol3-input", "\n\n.ol-grid.statecode .ol-grid-container {\n    background-color: white;\n    width: 10em;\n}\n\n.ol-grid .ol-grid-container.ol-hidden {\n}\n\n.ol-grid .ol-grid-container {\n    width: 15em;\n}\n\n.ol-input.top.right > input {\n    width: 18em;\n}\n\n.ol-grid-table {\n    width: 100%;\n}\n\ntable.ol-grid-table {\n    border-collapse: collapse;\n    width: 100%;\n}\n\ntable.ol-grid-table > td {\n    padding: 8px;\n    text-align: left;\n    border-bottom: 1px solid #ddd;\n}\n\n.ol-input input {\n    height: 1.75em !important;\n}\n\n.ol-input.statecode > input {\n    text-transform: uppercase;\n    width: 2em;\n    text-align: center;\n}\n    ");
+        var searchProvider = new ol3_input_1.Input.DEFAULT_OPTIONS.provider();
         var center = ol.proj.transform([-120, 35], 'EPSG:4326', 'EPSG:3857');
         var mapContainer = document.getElementsByClassName("map")[0];
         var map = new ol.Map({
             loadTilesWhileAnimating: true,
+            loadTilesWhileInteracting: true,
             target: mapContainer,
             layers: [
                 new ol.layer.Tile({
@@ -1709,12 +1865,14 @@ define("ol3-input/examples/ol3-input", ["require", "exports", "openlayers", "jqu
                 });
                 map.addControl(grid);
                 grid.on("feature-click", function (args) {
-                    zoomToFeature(map, args.feature);
+                    navigation_2.zoomToFeature(map, args.feature, { duration: 5000 });
                 });
                 grid.on("feature-hover", function (args) {
                     // TODO: highlight args.feature
                 });
+                // search for a state using 2 character state code
                 var input = ol3_input_1.Input.create({
+                    map: map,
                     className: "ol-input statecode top left-2 ",
                     closedText: "+",
                     openedText: "−",
@@ -1723,10 +1881,12 @@ define("ol3-input/examples/ol3-input", ["require", "exports", "openlayers", "jqu
                     autoClear: false,
                     autoCollapse: false,
                     placeholderText: "XX",
+                    provider: null,
                     regex: /^\w{2}$/m
                 });
                 input.input.maxLength = 2;
-                map.addControl(input);
+                // search existing features for STATE_ABBR, zoom to first one found
+                // if none found, invoke change handler
                 input.on("change", function (args) {
                     var value = args.value.toLocaleLowerCase();
                     var feature = layer.getSource().forEachFeature(function (feature) {
@@ -1738,7 +1898,7 @@ define("ol3-input/examples/ol3-input", ["require", "exports", "openlayers", "jqu
                         }
                     });
                     if (feature) {
-                        zoomToFeature(map, feature);
+                        navigation_2.zoomToFeature(map, feature);
                     }
                     else {
                         changeHandler({ value: value });
@@ -1791,14 +1951,14 @@ define("ol3-input/examples/ol3-input", ["require", "exports", "openlayers", "jqu
                             ]]));
                         feature.set("text", r.original.display_name);
                         source.addFeature(feature);
-                        zoomToFeature(map, feature);
+                        navigation_2.zoomToFeature(map, feature);
                     }
                     else {
                         var _d = ol.proj.transform([r.lon, r.lat], "EPSG:4326", "EPSG:3857"), lon = _d[0], lat = _d[1];
                         var feature = new ol.Feature(new ol.geom.Point([lon, lat]));
                         feature.set("text", r.original.display_name);
                         source.addFeature(feature);
-                        zoomToFeature(map, feature);
+                        navigation_2.zoomToFeature(map, feature);
                     }
                     return true;
                     var _b, _c;
@@ -1807,43 +1967,50 @@ define("ol3-input/examples/ol3-input", ["require", "exports", "openlayers", "jqu
                 console.error("geocoder failed");
             });
         };
-        map.addControl(ol3_input_1.Input.create({
-            className: 'ol-input bottom-2 right',
-            expanded: true,
-            placeholderText: "Bottom Right Search",
-            onChange: changeHandler
-        }));
-        map.addControl(ol3_input_1.Input.create({
+        // always perform a new search using default provider
+        ol3_input_1.Input.create({
+            map: map,
+            //className: 'ol-input bottom-2 right',
+            //expanded: true,
+            placeholderText: "Default Handler",
+            source: source // render result here
+        });
+        // Search the 'text' attribute of existing features and center
+        // on feature, otherwise perform outside search via change handler
+        ol3_input_1.Input
+            .create({
+            map: map,
             className: 'ol-input top right',
             expanded: true,
             openedText: "?",
-            placeholderText: "Feature Finder",
+            placeholderText: "Search (text)",
             autoClear: true,
             autoCollapse: false,
             canCollapse: false,
             hideButton: true,
             autoChange: true,
-            onChange: function (args) {
-                var value = args.value.toLocaleLowerCase();
-                var feature = source.forEachFeature(function (feature) {
-                    var text = feature.get("text");
-                    if (!text)
-                        return;
-                    if (-1 < text.toLocaleLowerCase().indexOf(value)) {
-                        return feature;
-                    }
+            provider: null // prevent using default provider
+        })
+            .on("change", function (args) {
+            var value = args.value.toLocaleLowerCase();
+            var feature = source.forEachFeature(function (feature) {
+                var text = feature.get("text");
+                if (!text)
+                    return;
+                if (-1 < text.toLocaleLowerCase().indexOf(value)) {
+                    return feature;
+                }
+            });
+            if (feature) {
+                map.getView().animate({
+                    center: feature.getGeometry().getClosestPoint(map.getView().getCenter()),
+                    duration: 1000
                 });
-                if (feature) {
-                    map.getView().animate({
-                        center: feature.getGeometry().getClosestPoint(map.getView().getCenter()),
-                        duration: 1000
-                    });
-                }
-                else {
-                    changeHandler({ value: value });
-                }
             }
-        }));
+            else {
+                changeHandler({ value: value });
+            }
+        });
     }
     exports.run = run;
 });
