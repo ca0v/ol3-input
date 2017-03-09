@@ -21,8 +21,9 @@
 <body>
     <div class="map"></div>
     <script>
-        (() => {
-            function getParameterByName(name, url = window.location.href) {
+        (function () {
+            function getParameterByName(name, url) {
+                url = url || window.location.href;
                 name = name.replace(/[\[\]]/g, "\\$&");
                 var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
                     results = regex.exec(url);
@@ -53,8 +54,8 @@
                     "built/index"
                 ],
 
-                callback: () => {
-                    require([getParameterByName("run") || "ol3-input/examples/index"], test => test.run());
+                callback: function() {
+                    require([getParameterByName("run") || "ol3-input/examples/index"], function (test) { test.run(); });
                 }
             });
 

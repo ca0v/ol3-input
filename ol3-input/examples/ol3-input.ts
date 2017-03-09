@@ -136,6 +136,7 @@ table.ol-grid-table > td {
             map.addLayer(layer);
 
             let grid = Grid.create({
+                map: map,
                 className: "ol-grid statecode top-2 left-2",
                 expanded: true,
                 currentExtent: true,
@@ -144,7 +145,6 @@ table.ol-grid-table > td {
                 showIcon: true,
                 layers: [layer]
             });
-            map.addControl(grid);
 
             grid.on("feature-click", args => {
                 zoomToFeature(map, args.feature, { duration: 5000 });
@@ -194,6 +194,7 @@ table.ol-grid-table > td {
     });
 
     let grid = Grid.create({
+        map: map,
         className: "ol-grid top-2 right",
         currentExtent: false,
         autoCollapse: false,
@@ -202,8 +203,6 @@ table.ol-grid-table > td {
         showIcon: false,
         layers: [vector]
     });
-
-    map.addControl(grid);
 
     let changeHandler = (args: { value: string }) => {
         if (!args.value) return;

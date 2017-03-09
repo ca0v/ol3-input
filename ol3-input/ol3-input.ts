@@ -282,6 +282,11 @@ export class Input extends ol.control.Control {
         });
 
         if (options.autoCollapse) {
+
+            input.addEventListener("blur", () => {
+                this.collapse(options);
+            });
+            
             input.addEventListener("keydown", (args: KeyboardEvent) => {
                 if (args.key === "Enter") {
                     button.focus();
@@ -343,15 +348,15 @@ export class Input extends ol.control.Control {
     collapse(options: InputOptions) {
         if (!options.canCollapse) return;
         options.expanded = false;
-        this.input.classList.toggle(olcss.CLASS_HIDDEN, true);
-        this.button.classList.toggle(olcss.CLASS_HIDDEN, false);
+        this.input.classList.add(olcss.CLASS_HIDDEN);
+        this.button.classList.remove(olcss.CLASS_HIDDEN);
         this.button.innerHTML = options.closedText;
     }
 
     expand(options: InputOptions) {
         options.expanded = true;
-        this.input.classList.toggle(olcss.CLASS_HIDDEN, false);
-        this.button.classList.toggle(olcss.CLASS_HIDDEN, true);
+        this.input.classList.remove(olcss.CLASS_HIDDEN);
+        this.button.classList.add(olcss.CLASS_HIDDEN);
         this.button.innerHTML = options.openedText;
         this.input.focus();
         options.autoSelect && this.input.select();
