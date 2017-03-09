@@ -12,6 +12,7 @@ declare module "bower_components/ol3-fun/ol3-fun/common" {
      * unable to create <td>, <tr> elements
      */
     export function html(html: string): HTMLElement;
+    export function pair<A, B>(a1: A[], a2: B[]): [A, B][];
     export function range(n: number): any[];
     export function shuffle<T>(array: T[]): T[];
 }
@@ -161,7 +162,8 @@ declare module "bower_components/ol3-fun/ol3-fun/snapshot" {
 }
 declare module "bower_components/ol3-grid/ol3-grid/ol3-grid" {
     import ol = require("openlayers");
-    export interface IOptions {
+    export interface GridOptions {
+        map?: ol.Map;
         className?: string;
         expanded?: boolean;
         hideButton?: boolean;
@@ -177,18 +179,23 @@ declare module "bower_components/ol3-grid/ol3-grid/ol3-grid" {
         target?: HTMLElement;
         layers?: ol.layer.Vector[];
         placeholderText?: string;
+        zoomDuration?: number;
+        zoomPadding?: number;
+        zoomMinResolution?: number;
     }
     export class Grid extends ol.control.Control {
-        static create(options?: IOptions): Grid;
+        static DEFAULT_OPTIONS: GridOptions;
+        static create(options?: GridOptions): Grid;
         private features;
         private button;
         private grid;
         private options;
-        constructor(options: IOptions);
+        private constructor(options);
         redraw(): void;
+        private featureMap;
         add(feature: ol.Feature, layer?: ol.layer.Vector): void;
+        remove(feature: ol.Feature, layer: ol.layer.Vector): void;
         clear(): void;
-        setMap(map: ol.Map): void;
         collapse(): void;
         expand(): void;
         on(type: string, cb: Function): ol.Object | ol.Object[];
@@ -222,6 +229,10 @@ declare module "bower_components/ol3-symbolizer/ol3-symbolizer/format/ol3-symbol
         type LineDash = number[];
         interface Fill {
             color?: string;
+            gradient?: {
+                type?: string;
+                stops?: string;
+            };
         }
         interface Stroke {
             color?: string;
