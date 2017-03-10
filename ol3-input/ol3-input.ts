@@ -2,101 +2,9 @@ import ol = require("openlayers");
 import $ = require("jquery");
 
 import { cssin, mixin, debounce } from "ol3-fun/ol3-fun/common";
+import { pair, range } from "ol3-fun/ol3-fun/common";
 import { zoomToFeature } from "ol3-fun/ol3-fun/navigation";
 import { OpenStreet } from "./providers/osm";
-
-const css = `
-    .ol-input {
-        position:absolute;
-    }
-    .ol-input.top {
-        top: 0.5em;
-    }
-    .ol-input.top-1 {
-        top: 1.5em;
-    }
-    .ol-input.top-2 {
-        top: 2.5em;
-    }
-    .ol-input.top-3 {
-        top: 3.5em;
-    }
-    .ol-input.top-4 {
-        top: 4.5em;
-    }
-    .ol-input.left {
-        left: 0.5em;
-    }
-    .ol-input.left-1 {
-        left: 1.5em;
-    }
-    .ol-input.left-2 {
-        left: 2.5em;
-    }
-    .ol-input.left-3 {
-        left: 3.5em;
-    }
-    .ol-input.left-4 {
-        left: 4.5em;
-    }
-    .ol-input.bottom {
-        bottom: 0.5em;
-    }
-    .ol-input.bottom-1 {
-        bottom: 1.5em;
-    }
-    .ol-input.bottom-2 {
-        bottom: 2.5em;
-    }
-    .ol-input.bottom-3 {
-        bottom: 3.5em;
-    }
-    .ol-input.bottom-4 {
-        bottom: 4.5em;
-    }
-    .ol-input.right {
-        right: 0.5em;
-    }
-    .ol-input.right-1 {
-        right: 1.5em;
-    }
-    .ol-input.right-2 {
-        right: 2.5em;
-    }
-    .ol-input.right-3 {
-        right: 3.5em;
-    }
-    .ol-input.right-4 {
-        right: 4.5em;
-    }
-    .ol-input button {
-        min-height: 1.375em;
-        min-width: 1.375em;
-        width: auto;
-        display: inline;
-    }
-    .ol-input.left button {
-        float:right;
-    }
-    .ol-input.right button {
-        float:left;
-    }
-    .ol-input input {
-        height: 2.175em;
-        width: 16em;
-        border: none;
-        padding: 0;
-        margin: 0;
-        margin-left: 2px;
-        margin-top: 2px;
-        vertical-align: top;
-        transition: width 0.25s;
-    }
-    .ol-input input.ol-hidden {
-        width: 0;
-        margin: 0;
-    }
-`;
 
 let olcss = {
     CLASS_CONTROL: 'ol-control',
@@ -169,6 +77,7 @@ export interface InputOptions extends olx.control.ControlOptions {
     map?: ol.Map;
     // what css class name to assign to the main element
     className?: string;
+    position?: string;
     expanded?: boolean;
     hideButton?: boolean;
     autoChange?: boolean;
@@ -194,7 +103,8 @@ const expando = {
 export class Input extends ol.control.Control {
 
     static DEFAULT_OPTIONS: InputOptions = {
-        className: 'ol-input bottom left',
+        className: 'ol-input',
+        position: 'bottom left',
         expanded: false,
         autoChange: false,
         autoClear: false,
@@ -211,19 +121,17 @@ export class Input extends ol.control.Control {
 
     static create(options?: InputOptions): Input {
 
-        cssin('ol-input', css);
-
         // provide computed defaults        
         options = mixin({
-            openedText: options.className && -1 < options.className.indexOf("left") ? expando.left : expando.right,
-            closedText: options.className && -1 < options.className.indexOf("left") ? expando.right : expando.left,
+            openedText: options.position && -1 < options.position.indexOf("left") ? expando.left : expando.right,
+            closedText: options.position && -1 < options.position.indexOf("left") ? expando.right : expando.left,
         }, options || {});
 
         // provide static defaults        
         options = mixin(mixin({}, Input.DEFAULT_OPTIONS), options);
 
         let element = document.createElement('div');
-        element.className = `${options.className} ${olcss.CLASS_UNSELECTABLE} ${olcss.CLASS_CONTROL}`;
+        element.className = `${options.className} ${options.position} ${olcss.CLASS_UNSELECTABLE} ${olcss.CLASS_CONTROL}`;
 
         let geocoderOptions = mixin({
             element: element,
@@ -232,6 +140,7 @@ export class Input extends ol.control.Control {
         }, options);
 
         let input = new Input(geocoderOptions);
+        input.handlers.push(() => element.remove());
 
         if (options.map) {
             options.map.addControl(input);
@@ -243,8 +152,9 @@ export class Input extends ol.control.Control {
     button: HTMLButtonElement;
     input: HTMLInputElement;
     options: InputOptions;
+    public handlers: Array<() => void>;
 
-    constructor(options: InputOptions) {
+    private constructor(options: InputOptions) {
 
         if (options.hideButton) {
             options.canCollapse = false;
@@ -258,6 +168,9 @@ export class Input extends ol.control.Control {
         });
 
         this.options = options;
+        this.handlers = [];
+
+        this.cssin();
 
         // have a provider and a source, go for it!
         if (options.provider && options.source) {
@@ -286,7 +199,7 @@ export class Input extends ol.control.Control {
             input.addEventListener("blur", () => {
                 this.collapse(options);
             });
-            
+
             input.addEventListener("keydown", (args: KeyboardEvent) => {
                 if (args.key === "Enter") {
                     button.focus();
@@ -343,6 +256,80 @@ export class Input extends ol.control.Control {
         }
 
         options.expanded ? this.expand(options) : this.collapse(options);
+    }
+
+    destroy() {
+        this.handlers.forEach(h => h());
+        this.setTarget(null);
+    }
+
+    setPosition(position: string) {
+        this.options.position.split(' ')
+            .forEach(k => this.options.element.classList.remove(k));
+
+        position.split(' ')
+            .forEach(k => this.options.element.classList.add(k));
+
+        this.options.position = position;
+    }
+
+    cssin() {
+        let className = this.options.className;
+        let positions = pair("top left right bottom".split(" "), range(24))
+            .map(pos => `.${className}.${pos[0] + (-pos[1] || '')} { ${pos[0]}:${0.5 + pos[1]}em; }`);
+
+        this.handlers.push(cssin(className, `
+            .${className} {
+                position: absolute;
+                background-color: rgba(255,255,255,.4);
+            }
+            .${className}.active {
+                background-color: white;
+            }
+            .${className}:hover {
+                background-color: white;
+            }
+            .${className} input[type="button"] {
+                color: rgba(0,60,136,1);
+                background: transparent;
+                border: none;
+                width: 2em;
+                height: 2em;
+            }            
+            .${className} button {
+                min-height: 1.375em;
+                min-width: 1.375em;
+                width: auto;
+                display: inline;
+            }
+
+            .${className}.left button {
+                float:right;
+            }
+
+            .${className}.right button {
+                float:left;
+            }
+
+            .${className} input {
+                height: 2.175em;
+                width: 16em;
+                border: none;
+                padding: 0;
+                margin: 0;
+                margin-left: 2px;
+                margin-top: 2px;
+                vertical-align: top;
+                transition: width 0.25s;
+            }
+
+            .${className} input.ol-hidden {
+                width: 0;
+                margin: 0;
+            }
+            
+            ${positions.join('\n')}
+        `));
     }
 
     collapse(options: InputOptions) {

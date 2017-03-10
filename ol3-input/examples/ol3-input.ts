@@ -157,7 +157,8 @@ table.ol-grid-table > td {
             // search for a state using 2 character state code
             let input = Input.create({
                 map: map,
-                className: "ol-input statecode top left-2 ",
+                className: "ol-input statecode",
+                position: "top left-2",
                 closedText: "+",
                 openedText: "−",
                 autoChange: true,
@@ -270,7 +271,8 @@ table.ol-grid-table > td {
     Input
         .create({
             map: map,
-            className: 'ol-input top right',
+            className: 'ol-input',
+            position: 'top right',
             expanded: true,
             openedText: "?",
             placeholderText: "Search (text)",
