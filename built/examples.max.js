@@ -1308,10 +1308,6 @@ define("ol3-input/ol3-input", ["require", "exports", "openlayers", "jquery", "no
     }(ol.control.Control));
     exports.Input = Input;
 });
-define("index", ["require", "exports", "ol3-input/ol3-input"], function (require, exports, Input) {
-    "use strict";
-    return Input;
-});
 define("node_modules/ol3-symbolizer/ol3-symbolizer/common/ajax", ["require", "exports", "jquery"], function (require, exports, $) {
     "use strict";
     var Ajax = (function () {
@@ -1987,12 +1983,12 @@ define("node_modules/ol3-symbolizer/ol3-symbolizer/ags/ags-source", ["require", 
     }());
     exports.ArcGisVectorSourceFactory = ArcGisVectorSourceFactory;
 });
-define("examples/ol3-input", ["require", "exports", "openlayers", "jquery", "node_modules/ol3-symbolizer/ol3-symbolizer/format/ol3-symbolizer", "index", "node_modules/ol3-fun/ol3-fun/common", "node_modules/ol3-fun/ol3-fun/navigation", "node_modules/ol3-symbolizer/ol3-symbolizer/ags/ags-source"], function (require, exports, ol, $, ol3_symbolizer_1, index_2, common_4, navigation_2, ags_source_1) {
+define("examples/ol3-input", ["require", "exports", "openlayers", "jquery", "node_modules/ol3-symbolizer/ol3-symbolizer/format/ol3-symbolizer", "ol3-input/ol3-input", "node_modules/ol3-fun/ol3-fun/common", "node_modules/ol3-fun/ol3-fun/navigation", "node_modules/ol3-symbolizer/ol3-symbolizer/ags/ags-source"], function (require, exports, ol, $, ol3_symbolizer_1, ol3_input_1, common_4, navigation_2, ags_source_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     function run() {
         common_4.cssin("examples/ol3-input", "\n\n.ol-grid.statecode .ol-grid-container {\n    background-color: white;\n    width: 10em;\n}\n\n.ol-grid .ol-grid-container.ol-hidden {\n}\n\n.ol-grid .ol-grid-container {\n    width: 15em;\n}\n\n.ol-input.top.right > input {\n    width: 18em;\n}\n\n.ol-grid-table {\n    width: 100%;\n}\n\ntable.ol-grid-table {\n    border-collapse: collapse;\n    width: 100%;\n}\n\ntable.ol-grid-table > td {\n    padding: 8px;\n    text-align: left;\n    border-bottom: 1px solid #ddd;\n}\n\n.ol-input input {\n    height: 1.75em !important;\n}\n\n.ol-input.statecode > input {\n    text-transform: uppercase;\n    width: 2em;\n    text-align: center;\n}\n    ");
-        var searchProvider = new index_2.Input.DEFAULT_OPTIONS.provider();
+        var searchProvider = new ol3_input_1.Input.DEFAULT_OPTIONS.provider();
         var center = ol.proj.transform([-120, 35], 'EPSG:4326', 'EPSG:3857');
         var mapContainer = document.getElementsByClassName("map")[0];
         var map = new ol.Map({
@@ -2064,7 +2060,7 @@ define("examples/ol3-input", ["require", "exports", "openlayers", "jquery", "nod
                     return style;
                 });
                 map.addLayer(layer);
-                var input = index_2.Input.create({
+                var input = ol3_input_1.Input.create({
                     map: map,
                     className: "ol-input statecode",
                     position: "top left-2",
@@ -2150,12 +2146,12 @@ define("examples/ol3-input", ["require", "exports", "openlayers", "jquery", "nod
                 console.error("geocoder failed");
             });
         };
-        index_2.Input.create({
+        ol3_input_1.Input.create({
             map: map,
             placeholderText: "Default Handler",
             source: source
         });
-        index_2.Input
+        ol3_input_1.Input
             .create({
             map: map,
             className: 'ol-input',

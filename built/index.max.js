@@ -498,8 +498,4 @@ define("ol3-input/ol3-input", ["require", "exports", "openlayers", "jquery", "no
     }(ol.control.Control));
     exports.Input = Input;
 });
-define("index", ["require", "exports", "ol3-input/ol3-input"], function (require, exports, Input) {
-    "use strict";
-    return Input;
-});
 //# sourceMappingURL=index.max.js.map

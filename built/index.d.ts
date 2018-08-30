@@ -140,7 +140,3 @@ declare module "ol3-input/ol3-input" {
         }) => void): any;
     }
 }
-declare module "index" {
-    import Input = require("ol3-input/ol3-input");
-    export = Input;
-}
