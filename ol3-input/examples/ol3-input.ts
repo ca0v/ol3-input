@@ -106,6 +106,7 @@ table.ol-grid-table > td {
 
     ArcGisVectorSourceFactory.create({
         map: map,
+        serviceType: "MapServer",
         services: 'https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services',
         serviceName: 'USA_States_Generalized',
         layers: [0]

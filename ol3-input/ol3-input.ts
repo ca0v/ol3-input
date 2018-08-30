@@ -1,4 +1,5 @@
 import ol = require("openlayers");
+import {olx} from "openlayers";
 import $ = require("jquery");
 
 import { cssin, mixin, debounce } from "ol3-fun/ol3-fun/common";
@@ -85,6 +86,7 @@ export interface InputOptions extends olx.control.ControlOptions {
     autoCollapse?: boolean;
     autoSelect?: boolean;
     canCollapse?: boolean;
+    changeDelay?: number;
     closedText?: string;
     openedText?: string;
     target?: HTMLElement;
@@ -111,6 +113,7 @@ export class Input extends ol.control.Control {
         autoCollapse: true,
         autoSelect: true,
         canCollapse: true,
+        changeDelay: 2000,
         hideButton: false,
         closedText: expando.right,
         openedText: expando.left,
@@ -228,7 +231,7 @@ export class Input extends ol.control.Control {
 
                 this.dispatchEvent(args);
 
-            }, 500));
+            }, options.changeDelay));
         }
 
         input.addEventListener("change", () => {
@@ -356,6 +359,6 @@ export class Input extends ol.control.Control {
         value: string;
     }) => void);
     on(type: string, cb: Function) {
-        super.on(type, cb);
+        super.on(type, <any>cb);
     }
 }
