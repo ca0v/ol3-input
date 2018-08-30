@@ -2193,8 +2193,6 @@ define("ol3-input/examples/ol3-input", ["require", "exports", "openlayers", "jqu
             provider: null
         })
             .on("change", function (args) {
-            var x = new Path2D("");
-            x;
             var value = args.value.toLocaleLowerCase();
             var feature = source.forEachFeature(function (feature) {
                 var text = feature.get("text");
