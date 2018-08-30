@@ -1,7 +1,6 @@
 import ol = require("openlayers");
 import $ = require("jquery");
 
-import { Grid } from "ol3-grid";
 import { StyleConverter } from "ol3-symbolizer/ol3-symbolizer/format/ol3-symbolizer";
 import { Input } from "../ol3-input";
 import { cssin } from "ol3-fun/ol3-fun/common";
@@ -135,25 +134,6 @@ table.ol-grid-table > td {
 
             map.addLayer(layer);
 
-            let grid = Grid.create({
-                map: map,
-                className: "ol-grid statecode top-2 left-2",
-                expanded: true,
-                currentExtent: true,
-                autoCollapse: true,
-                autoPan: false,
-                showIcon: true,
-                layers: [layer]
-            });
-
-            grid.on("feature-click", args => {
-                zoomToFeature(map, args.feature, { duration: 5000 });
-            });
-
-            grid.on("feature-hover", args => {
-                // TODO: highlight args.feature
-            });
-
             // search for a state using 2 character state code
             let input = Input.create({
                 map: map,
@@ -194,17 +174,6 @@ table.ol-grid-table > td {
         map.addLayer(vector);
     });
 
-    let grid = Grid.create({
-        map: map,
-        className: "ol-grid top-2 right",
-        currentExtent: false,
-        autoCollapse: false,
-        autoPan: true,
-        labelAttributeName: "text",
-        showIcon: false,
-        layers: [vector]
-    });
-
     let changeHandler = (args: { value: string }) => {
         if (!args.value) return;
         console.log("search", args.value);
@@ -217,6 +186,7 @@ table.ol-grid-table > td {
         });
 
         $.ajax({
+            crossDomain: true,
             url: searchArgs.url,
             method: searchProvider.method || 'GET',
             data: searchArgs.params,

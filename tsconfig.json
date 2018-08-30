@@ -4,14 +4,12 @@
         "target": "es5",
         "declaration": true,
         "noImplicitAny": false,
-        "outFile": "built/index.js",
+        "outFile": "built/examples.max.js",
         "sourceMap": true,
-        "moduleResolution": "node",
-        "baseUrl": "./bower_components"
+        "moduleResolution": "classic",
+        "baseUrl": "./node_modules"
     },
     "include": [
-        "index.ts",
-        "ol3-input",
-        "typings/index.d.ts"
+        "ol3-input/**/*.ts"
     ]
 }

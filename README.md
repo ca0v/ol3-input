@@ -1,19 +1,17 @@
-# OpenLayers 3 & 4 Input
+# OpenLayers Input
 * [ol3-input](https://github.com/ca0v/ol3-input).
 
 ## Examples
 
+* [v5.1.3](https://rawgit.com/ca0v/ol3-input/v5.1.3/rawgit.html)
 * [v4.0.1](https://rawgit.com/ca0v/ol3-input/v4.0.1/rawgit.html)
 * [v3.20.1](https://rawgit.com/ca0v/ol3-input/v3.20.1/rawgit.html)
 * [master](https://rawgit.com/ca0v/ol3-input/master/rawgit.html)
 
 ## Build
 
-* typings install
-* bower install
-* tsc -w
+* npm run test
 
 ## Consume
 
-* `typings install ol3-input=github:ca0v/ol3-input/built/index.d.ts#v4.0.1 --global --save`
-* `bower install ol3-input=git://github.com/ca0v/ol3-input.git#v4.0.1 --save`
+* npm install https://github.com/ca0v/ol3-fun/tarball/v5.1.3
