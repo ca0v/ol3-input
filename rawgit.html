@@ -6,7 +6,7 @@
     <title>OpenLayers 3 - Popup</title>
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
     <style>
-        @import url('https://cdnjs.cloudflare.com/ajax/libs/openlayers/4.0.1/ol.css');
+        @import url('https://cdn.rawgit.com/openlayers/openlayers.github.io/master/en/v5.1.3/css/ol.css');
         .map {
             position: absolute;
             top: 0;
@@ -37,12 +37,18 @@
 
             require.config({
 
+                shim: {
+                    // no need to wrap ol in a define method when using a shim
+                    // build this using the "npm run build-legacy" (see ol package.json)
+                    "openlayers": {
+                        deps: [], // no dependencies, needs path to indicate where to find "openlayers"
+                        exports: "ol", // tell requirejs which global this library defines
+                    }
+                },
+                paths: {
+                    "openlayers": 'https://cdn.rawgit.com/openlayers/openlayers.github.io/master/en/v5.1.3/build/ol'
+                },
                 packages: [
-                    {
-                        name: 'openlayers',
-                        location: localhost ? "./bower_components/openlayers" : 'https://cdnjs.cloudflare.com/ajax/libs/openlayers/4.0.1',
-                        main: debug ? 'ol-debug' : 'ol'
-                    },
                     {
                         name: 'jquery',
                         location: localhost ? "./bower_components/jquery/dist" : 'https://code.jquery.com',
@@ -54,7 +60,7 @@
                     "built/examples.max"
                 ],
 
-                callback: function() {
+                callback: function () {
                     require([getParameterByName("run") || "ol3-input/examples/index"], function (test) { test.run(); });
                 }
             });
