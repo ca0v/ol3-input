@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "clean": "rm built/** -rf",
-    "build-for-amd": "tsc -p tsconfig.json --outFile built/index.max.js && mv index.max.d.ts index.d.ts",
+    "build-for-amd": "tsc -p tsconfig.json --outFile built/index.max.js && mv built/index.max.d.ts built/index.d.ts",
     "build-for-examples": "tsc -p tsconfig-examples.json --outFile built/examples.max.js",
     "live-for-examples": "live-server --port=5000 --wait=200 --watch=./built/examples.max.js --open=./rawgit.html?debug=1 --browser=CHROME",
     "dev-for-examples": "start npm run build-for-examples && npm run live-for-examples",
