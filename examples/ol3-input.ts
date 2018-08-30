@@ -2,7 +2,7 @@ import ol = require("openlayers");
 import $ = require("jquery");
 
 import { StyleConverter } from "ol3-symbolizer/ol3-symbolizer/format/ol3-symbolizer";
-import { Input } from "../ol3-input";
+import { Input } from "../../ol3-input/index";
 import { cssin } from "ol3-fun/ol3-fun/common";
 import { zoomToFeature } from "ol3-fun/ol3-fun/navigation";
 import { ArcGisVectorSourceFactory } from "ol3-symbolizer/ol3-symbolizer/ags/ags-source";

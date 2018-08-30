@@ -1,6 +1,8 @@
+import "./ol3-input";
+
 export function run() {
     let l = window.location;
-    let path = `${l.origin}${l.pathname}?run=ol3-input/examples/`;
+    let path = `${l.origin}${l.pathname}?run=examples/`;
     let labs = `
     index
     ol3-input

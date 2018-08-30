@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "allowJs": false,
-        "baseUrl": "./node_modules",
+        "baseUrl": "../node_modules",
         "declaration": false,
         "module": "amd",
         "moduleResolution": "classic",
@@ -12,6 +12,6 @@
     },
     "include": [
         "index.ts",
-        "ol3-input/**/*.ts"
+        "**/*.ts"
     ]
 }
