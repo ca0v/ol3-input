@@ -741,52 +741,52 @@ define("node_modules/ol3-symbolizer/ol3-symbolizer/format/ol3-symbolizer", ["req
                 var repitition = fill.pattern.repitition;
                 var canvas = document.createElement('canvas');
                 var spacing = canvas.width = canvas.height = fill.pattern.spacing | 6;
-                var context = canvas.getContext('2d');
-                context.fillStyle = fill.pattern.color;
+                var context_1 = canvas.getContext('2d');
+                context_1.fillStyle = fill.pattern.color;
                 switch (fill.pattern.orientation) {
                     case "horizontal":
                         for (var i = 0; i < spacing; i++) {
-                            context.fillRect(i, 0, 1, 1);
+                            context_1.fillRect(i, 0, 1, 1);
                         }
                         break;
                     case "vertical":
                         for (var i = 0; i < spacing; i++) {
-                            context.fillRect(0, i, 1, 1);
+                            context_1.fillRect(0, i, 1, 1);
                         }
                         break;
                     case "cross":
                         for (var i = 0; i < spacing; i++) {
-                            context.fillRect(i, 0, 1, 1);
-                            context.fillRect(0, i, 1, 1);
+                            context_1.fillRect(i, 0, 1, 1);
+                            context_1.fillRect(0, i, 1, 1);
                         }
                         break;
                     case "forward":
                         for (var i = 0; i < spacing; i++) {
-                            context.fillRect(i, i, 1, 1);
+                            context_1.fillRect(i, i, 1, 1);
                         }
                         break;
                     case "backward":
                         for (var i = 0; i < spacing; i++) {
-                            context.fillRect(spacing - 1 - i, i, 1, 1);
+                            context_1.fillRect(spacing - 1 - i, i, 1, 1);
                         }
                         break;
                     case "diagonal":
                         for (var i = 0; i < spacing; i++) {
-                            context.fillRect(i, i, 1, 1);
-                            context.fillRect(spacing - 1 - i, i, 1, 1);
+                            context_1.fillRect(i, i, 1, 1);
+                            context_1.fillRect(spacing - 1 - i, i, 1, 1);
                         }
                         break;
                 }
-                return mixin_1.mixin(context.createPattern(canvas, repitition), fill.pattern);
+                return mixin_1.mixin(context_1.createPattern(canvas, repitition), fill.pattern);
             }
             if (fill.image) {
                 var canvas = document.createElement('canvas');
                 var _b = (_a = fill.image.imgSize, canvas.width = _a[0], canvas.height = _a[1], _a), w_1 = _b[0], h_1 = _b[1];
-                var context_1 = canvas.getContext('2d');
+                var context_2 = canvas.getContext('2d');
                 var _c = [0, 0], dx = _c[0], dy = _c[1];
                 var image_1 = document.createElement("img");
                 image_1.src = fill.image.imageData;
-                image_1.onload = function () { return context_1.drawImage(image_1, 0, 0, w_1, h_1); };
+                image_1.onload = function () { return context_2.drawImage(image_1, 0, 0, w_1, h_1); };
                 return "rgba(255,255,255,0.1)";
             }
             throw "invalid color configuration";
