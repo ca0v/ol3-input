@@ -1,5 +1,5 @@
 import ol = require("openlayers");
-import {olx} from "openlayers";
+import { olx } from "openlayers";
 import $ = require("jquery");
 
 import { cssin, mixin, debounce } from "ol3-fun/ol3-fun/common";
@@ -122,13 +122,14 @@ export class Input extends ol.control.Control {
         regex: /\S{2,}/,
     };
 
-    static create(options?: InputOptions): Input {
+    static create(options: InputOptions = {}): Input {
 
+        options = options || {};
         // provide computed defaults        
         options = mixin({
             openedText: options.position && -1 < options.position.indexOf("left") ? expando.left : expando.right,
             closedText: options.position && -1 < options.position.indexOf("left") ? expando.right : expando.left,
-        }, options || {});
+        }, options);
 
         // provide static defaults        
         options = mixin(mixin({}, Input.DEFAULT_OPTIONS), options);
@@ -264,6 +265,15 @@ export class Input extends ol.control.Control {
     destroy() {
         this.handlers.forEach(h => h());
         this.setTarget(null);
+    }
+
+    getValue(): string {
+        return this.input.value;
+    }
+
+    setValue(v: string) {
+        this.input.value = v;
+        this.input.dispatchEvent(new Event("change"));
     }
 
     setPosition(position: string) {

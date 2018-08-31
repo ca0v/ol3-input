@@ -29,13 +29,18 @@
                 }
             },
             paths: {
-                "openlayers": "../static/openlayers/index"
+                "openlayers": "../node_modules/ol/build/ol"
             },
             packages: [
-                {
+            {
                     name: 'ol',
                     location: '../node_modules/ol',
                     main: 'index'
+                },
+                {
+                    name: 'jquery',
+                    location: '../node_modules/jquery/dist',
+                    main: 'jquery.min'
                 },
                 {
                     name: 'mocha',
