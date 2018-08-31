@@ -128,15 +128,17 @@ declare module "ol3-input/ol3-input" {
         handlers: Array<() => void>;
         private constructor();
         destroy(): void;
+        getValue(): string;
+        setValue(v: string): void;
         setPosition(position: string): void;
         cssin(): void;
         collapse(options: InputOptions): void;
         expand(options: InputOptions): void;
-        on(type: string, cb: Function): any;
+        on(type: string, cb: Function): (ol.EventsKey | ol.EventsKey[]);
         on(type: "change", cb: (args: {
             type: string;
             target: Input;
             value: string;
-        }) => void): any;
+        }) => void): (ol.EventsKey | ol.EventsKey[]);
     }
 }

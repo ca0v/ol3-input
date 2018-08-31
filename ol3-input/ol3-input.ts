@@ -362,13 +362,13 @@ export class Input extends ol.control.Control {
         options.autoSelect && this.input.select();
     }
 
-    on(type: string, cb: Function);
+    on(type: string, cb: Function): (ol.EventsKey | ol.EventsKey[]);
     on(type: "change", cb: (args: {
         type: string;
         target: Input;
         value: string;
-    }) => void);
+    }) => void): (ol.EventsKey | ol.EventsKey[]);
     on(type: string, cb: Function) {
-        super.on(type, <any>cb);
+        return super.on(type, <any>cb);
     }
 }

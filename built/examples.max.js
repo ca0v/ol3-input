@@ -1231,10 +1231,12 @@ define("ol3-input/ol3-input", ["require", "exports", "openlayers", "jquery", "no
             return _this;
         }
         Input.create = function (options) {
+            if (options === void 0) { options = {}; }
+            options = options || {};
             options = common_2.mixin({
                 openedText: options.position && -1 < options.position.indexOf("left") ? expando.left : expando.right,
                 closedText: options.position && -1 < options.position.indexOf("left") ? expando.right : expando.left,
-            }, options || {});
+            }, options);
             options = common_2.mixin(common_2.mixin({}, Input.DEFAULT_OPTIONS), options);
             var element = document.createElement('div');
             element.className = options.className + " " + options.position + " " + olcss.CLASS_UNSELECTABLE + " " + olcss.CLASS_CONTROL;
@@ -1253,6 +1255,13 @@ define("ol3-input/ol3-input", ["require", "exports", "openlayers", "jquery", "no
         Input.prototype.destroy = function () {
             this.handlers.forEach(function (h) { return h(); });
             this.setTarget(null);
+        };
+        Input.prototype.getValue = function () {
+            return this.input.value;
+        };
+        Input.prototype.setValue = function (v) {
+            this.input.value = v;
+            this.input.dispatchEvent(new Event("change"));
         };
         Input.prototype.setPosition = function (position) {
             var _this = this;
@@ -1285,7 +1294,7 @@ define("ol3-input/ol3-input", ["require", "exports", "openlayers", "jquery", "no
             options.autoSelect && this.input.select();
         };
         Input.prototype.on = function (type, cb) {
-            _super.prototype.on.call(this, type, cb);
+            return _super.prototype.on.call(this, type, cb);
         };
         Input.DEFAULT_OPTIONS = {
             className: 'ol-input',
