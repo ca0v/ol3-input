@@ -1,6 +1,6 @@
-import { should, shouldEqual } from "./base";
+import { should, shouldEqual } from "../base";
 
-import { InputOptions, Input } from "../ol3-input/ol3-input";
+import { InputOptions, Input } from "../../ol3-input/ol3-input";
 
 describe("Input Tests", () => {
     it("Input", () => {

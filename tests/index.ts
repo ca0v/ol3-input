@@ -1,2 +1,1 @@
-import "./test";
-import "./input";
+import "./spec/input";

@@ -15,58 +15,11 @@
             right: 0;
         }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.2/require.min.js"></script>
+    <script src="./static/require.js" data-main="./built/loaders/examples"></script>
 </head>
 
 <body>
     <div class="map"></div>
-    <script>
-        (function () {
-            function getParameterByName(name, url) {
-                url = url || window.location.href;
-                name = name.replace(/[\[\]]/g, "\\$&");
-                var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
-                    results = regex.exec(url);
-                if (!results) return null;
-                if (!results[2]) return '';
-                return decodeURIComponent(results[2].replace(/\+/g, " "));
-            }
-
-            let debug = getParameterByName("debug") === "1";
-            let localhost = window.location.hostname === "localhost";
-
-            require.config({
-
-                shim: {
-                    // no need to wrap ol in a define method when using a shim
-                    // build this using the "npm run build-legacy" (see ol package.json)
-                    "openlayers": {
-                        deps: [], // no dependencies, needs path to indicate where to find "openlayers"
-                        exports: "ol", // tell requirejs which global this library defines
-                    }
-                },
-                paths: {
-                    "openlayers": 'https://cdn.rawgit.com/openlayers/openlayers.github.io/master/en/v5.1.3/build/ol'
-                },
-                packages: [
-                    {
-                        name: 'jquery',
-                        location: localhost ? "./bower_components/jquery/dist" : 'https://code.jquery.com',
-                        main: localhost ? (debug ? 'jquery' : 'jquery.min') : (debug ? 'jquery-3.1.0' : 'jquery-3.1.0.min')
-                    }
-                ],
-
-                deps: [
-                    "built/examples.max"
-                ],
-
-                callback: function () {
-                    require([getParameterByName("run") || "examples/index"], function (test) { test.run(); });
-                }
-            });
-
-        })();
-    </script>
 </body>
 
 </html>

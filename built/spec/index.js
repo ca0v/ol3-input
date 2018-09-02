@@ -11,6 +11,36 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
+define("tests/base", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    function describe(title, cb) {
+        console.log(title || "undocumented test group");
+        return window.describe(title, cb);
+    }
+    exports.describe = describe;
+    function it(title, cb) {
+        console.log(title || "undocumented test");
+        return window.it(title, cb);
+    }
+    exports.it = it;
+    function should(result, message) {
+        console.log(message || "undocumented assertion");
+        if (!result)
+            throw message;
+    }
+    exports.should = should;
+    function shouldEqual(a, b, message) {
+        if (a != b)
+            console.warn(a, b);
+        should(a == b, message);
+    }
+    exports.shouldEqual = shouldEqual;
+    function stringify(o) {
+        return JSON.stringify(o, null, "\t");
+    }
+    exports.stringify = stringify;
+});
 define("node_modules/ol3-fun/ol3-fun/common", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -509,4 +539,57 @@ define("ol3-input/ol3-input", ["require", "exports", "openlayers", "jquery", "no
     }(ol.control.Control));
     exports.Input = Input;
 });
-//# sourceMappingURL=index.max.js.map
+define("tests/spec/input", ["require", "exports", "tests/base", "ol3-input/ol3-input"], function (require, exports, base_1, ol3_input_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    describe("Input Tests", function () {
+        it("Input", function () {
+            base_1.should(!!ol3_input_1.Input, "Input");
+        });
+        it("DEFAULT_OPTIONS", function () {
+            var options = ol3_input_1.Input.DEFAULT_OPTIONS;
+            checkDefaultInputOptions(options);
+        });
+        it("options of an Input instance", function () {
+            var input = ol3_input_1.Input.create();
+            checkDefaultInputOptions(input.options);
+        });
+        it("input dom", function (done) {
+            var input = ol3_input_1.Input.create({});
+            var target = document.createElement("div");
+            input.on("change", function (args) {
+                base_1.should(args.value === "hello", "change to hello");
+                done();
+            });
+            base_1.shouldEqual(target.innerHTML, "", "innerHTML");
+            input.setValue("hello");
+        });
+    });
+    function checkDefaultInputOptions(options) {
+        base_1.should(!!options, "options");
+        base_1.shouldEqual(options.autoChange, false, "autoChange");
+        base_1.shouldEqual(options.autoClear, false, "autoClear");
+        base_1.shouldEqual(options.autoCollapse, true, "autoCollapse");
+        base_1.shouldEqual(options.autoSelect, true, "autoSelect");
+        base_1.shouldEqual(options.canCollapse, true, "canCollapse");
+        base_1.shouldEqual(options.changeDelay, 2000, "changeDelay");
+        base_1.shouldEqual(options.className, "ol-input", "className");
+        base_1.should(options.closedText.length > 0, "closedText");
+        base_1.shouldEqual(options.expanded, false, "expanded");
+        base_1.shouldEqual(options.hideButton, false, "hideButton");
+        base_1.shouldEqual(options.map, undefined, "map");
+        base_1.shouldEqual(!!options.openedText, true, "openedText");
+        base_1.shouldEqual(!!options.placeholderText, true, "placeholderText");
+        base_1.shouldEqual(options.position, "bottom left", "position");
+        base_1.shouldEqual(!!options.provider, true, "provider");
+        base_1.should(!!options.regex, "regex");
+        base_1.shouldEqual(options.render, undefined, "render");
+        base_1.shouldEqual(options.source, undefined, "source");
+        base_1.shouldEqual(options.target, undefined, "target");
+    }
+});
+define("tests/index", ["require", "exports", "tests/spec/input"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+});
+//# sourceMappingURL=index.js.map

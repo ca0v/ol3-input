@@ -1,3 +1,4 @@
+/// <reference types="jquery" />
 declare module "node_modules/ol3-fun/ol3-fun/common" {
     export function uuid(): string;
     export function asArray<T extends HTMLInputElement>(list: NodeList): T[];
@@ -12,16 +13,16 @@ declare module "node_modules/ol3-fun/ol3-fun/common" {
     export function debounce<T extends Function>(func: T, wait?: number, immediate?: boolean): T;
     export function html(html: string): HTMLElement;
     export function pair<A, B>(a1: A[], a2: B[]): [A, B][];
-    export function range(n: number): any[];
+    export function range(n: number): number[];
     export function shuffle<T>(array: T[]): T[];
 }
 declare module "node_modules/ol3-fun/ol3-fun/navigation" {
-    import ol = require("openlayers");
+    import * as ol from "openlayers";
     export function zoomToFeature(map: ol.Map, feature: ol.Feature, options?: {
         duration?: number;
         padding?: number;
         minResolution?: number;
-    }): void;
+    }): JQuery.Deferred<any, any, any>;
 }
 declare module "ol3-input/providers/osm" {
     export module OpenStreet {
