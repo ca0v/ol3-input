@@ -17,8 +17,8 @@
             return '';
         return decodeURIComponent(results[2].replace(/\+/g, " "));
     }
-    var localhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-    loadCss(localhost ? "../static/ol/v5.1.3/ol.css" : "https://cdn.rawgit.com/openlayers/openlayers.github.io/master/en/v5.1.3/css/ol.css");
+    var localhost = false && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+    loadCss(localhost ? "../node_modules/ol3-fun/static/ol/v5.1.3/ol.css" : "https://cdn.rawgit.com/openlayers/openlayers.github.io/master/en/v5.1.3/css/ol.css");
     requirejs.config({
         shim: {
             // no need to wrap ol in a define method when using a shim
@@ -29,7 +29,7 @@
             }
         },
         paths: {
-            "openlayers": localhost ? "../../static/ol/v5.1.3/ol" : "https://cdn.rawgit.com/openlayers/openlayers.github.io/master/en/v5.1.3/build/ol"
+            "openlayers": localhost ? "../../node_modules/ol3-fun/static/ol/v5.1.3/ol" : "https://cdn.rawgit.com/openlayers/openlayers.github.io/master/en/v5.1.3/build/ol"
         },
         packages: [
             {
@@ -39,8 +39,6 @@
             }
         ],
         deps: ["../examples.max"],
-        callback: function () {
-            requirejs([getParameterByName("run") || "examples/index"], function (test) { test.run(); });
-        }
+        callback: function () { return requirejs([getParameterByName("run") || "examples/index"], function (test) { return test.run(); }); }
     });
 })();

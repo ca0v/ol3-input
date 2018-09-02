@@ -17,10 +17,10 @@ function getParameterByName(name: string, url?: string) {
 }
 
 let debug = getParameterByName("debug") === "1";
-let localhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+let localhost = false && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
 
 loadCss(localhost ? "../node_modules/mocha/mocha.css" : "https://cdnjs.cloudflare.com/ajax/libs/mocha/5.2.0/mocha.css");
-loadCss("../static/ol/v5.1.3/ol.css");
+loadCss(localhost ? "../node_modules/ol3-fun/static/ol/v5.1.3/ol.css" : "https://cdn.rawgit.com/openlayers/openlayers.github.io/master/en/v5.1.3/css/ol.css");
 
 // setup require js packaging system and load the "spec" before running mocha
 requirejs.config({
@@ -33,7 +33,7 @@ requirejs.config({
         }
     },
     paths: {
-        "openlayers": localhost ? "../../static/ol/v5.1.3/ol" : "https://cdn.rawgit.com/openlayers/openlayers.github.io/master/en/v5.1.3/build/ol"
+        "openlayers": localhost ? "../../node_modules/ol3-fun/static/ol/v5.1.3/ol" : "https://cdn.rawgit.com/openlayers/openlayers.github.io/master/en/v5.1.3/build/ol"
     },
     packages: [
         {
@@ -49,15 +49,20 @@ requirejs.config({
     ],
     deps: ["../spec/index"],
 
-    callback: function () {
-        requirejs(["mocha"], function () {
+    callback: () => {
+        requirejs(["mocha"], (boo) => {
+            // window.Mocha is a 
             let Mocha = window["mocha"];
-
             let mocha = Mocha.setup({
                 timeout: 6000,
                 ui: 'bdd',
                 bail: false
             });
+            console.log(mocha);
+
+            // mocha is putting out globals...hide them (should only be when running as CLI so not sure what's happening)
+            define("mocha", [], () => ({ describe, it }));
+
             // execute "describe" and "it" methods before running mocha
             requirejs(["tests/index"], () => mocha.run());
         });

@@ -539,22 +539,22 @@ define("ol3-input/ol3-input", ["require", "exports", "openlayers", "jquery", "no
     }(ol.control.Control));
     exports.Input = Input;
 });
-define("tests/spec/input", ["require", "exports", "tests/base", "ol3-input/ol3-input"], function (require, exports, base_1, ol3_input_1) {
+define("tests/spec/input", ["require", "exports", "tests/base", "mocha", "ol3-input/ol3-input"], function (require, exports, base_1, mocha_1, ol3_input_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    describe("Input Tests", function () {
-        it("Input", function () {
+    mocha_1.describe("Input Tests", function () {
+        mocha_1.it("Input", function () {
             base_1.should(!!ol3_input_1.Input, "Input");
         });
-        it("DEFAULT_OPTIONS", function () {
+        mocha_1.it("DEFAULT_OPTIONS", function () {
             var options = ol3_input_1.Input.DEFAULT_OPTIONS;
             checkDefaultInputOptions(options);
         });
-        it("options of an Input instance", function () {
+        mocha_1.it("options of an Input instance", function () {
             var input = ol3_input_1.Input.create();
             checkDefaultInputOptions(input.options);
         });
-        it("input dom", function (done) {
+        mocha_1.it("input dom", function (done) {
             var input = ol3_input_1.Input.create({});
             var target = document.createElement("div");
             input.on("change", function (args) {

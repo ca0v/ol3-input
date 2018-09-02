@@ -17,9 +17,9 @@
         return decodeURIComponent(results[2].replace(/\+/g, " "));
     }
 
-    let localhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+    let localhost = false && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
 
-    loadCss(localhost ? "../static/ol/v5.1.3/ol.css" : "https://cdn.rawgit.com/openlayers/openlayers.github.io/master/en/v5.1.3/css/ol.css");
+    loadCss(localhost ? "../node_modules/ol3-fun/static/ol/v5.1.3/ol.css" : "https://cdn.rawgit.com/openlayers/openlayers.github.io/master/en/v5.1.3/css/ol.css");
 
     requirejs.config({
 
@@ -33,7 +33,7 @@
         },
 
         paths: {
-            "openlayers": localhost ? "../../static/ol/v5.1.3/ol" : "https://cdn.rawgit.com/openlayers/openlayers.github.io/master/en/v5.1.3/build/ol"
+            "openlayers": localhost ? "../../node_modules/ol3-fun/static/ol/v5.1.3/ol" : "https://cdn.rawgit.com/openlayers/openlayers.github.io/master/en/v5.1.3/build/ol"
         },
 
         packages: [
@@ -46,9 +46,7 @@
 
         deps: ["../examples.max"],
 
-        callback: function () {
-            requirejs([getParameterByName("run") || "examples/index"], function (test) { test.run(); });
-        }
+        callback: () => requirejs([getParameterByName("run") || "examples/index"], test => test.run())
     });
 
 })();

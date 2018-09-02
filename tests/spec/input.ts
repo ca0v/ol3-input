@@ -1,5 +1,5 @@
 import { should, shouldEqual } from "../base";
-
+import {describe, it} from "mocha";
 import { InputOptions, Input } from "../../ol3-input/ol3-input";
 
 describe("Input Tests", () => {
