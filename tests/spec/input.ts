@@ -1,10 +1,15 @@
 import { should, shouldEqual } from "../base";
-import {describe, it} from "mocha";
-import { InputOptions, Input } from "../../ol3-input/ol3-input";
+import { describe, it } from "mocha";
+import { InputOptions, Input, OsmSearchProvider } from "../../index";
 
 describe("Input Tests", () => {
     it("Input", () => {
         should(!!Input, "Input");
+    });
+
+    it("OsmSearchProvider", () => {
+        // to become part of an API test, but really belongs in ol3-search providers
+        should(!!OsmSearchProvider, "OsmSearchProvider");
     });
 
     it("DEFAULT_OPTIONS", () => {
@@ -27,7 +32,6 @@ describe("Input Tests", () => {
         shouldEqual(target.innerHTML, "", "innerHTML");
         input.setValue("hello");
     });
-
 });
 
 function checkDefaultInputOptions(options: InputOptions) {

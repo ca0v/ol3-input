@@ -1,5 +1,5 @@
 /// <reference types="jquery" />
-declare module "node_modules/ol3-fun/ol3-fun/common" {
+declare module "ol3-fun/ol3-fun/common" {
     export function uuid(): string;
     export function asArray<T extends HTMLInputElement>(list: NodeList): T[];
     export function toggle(e: HTMLElement, className: string, force?: boolean): boolean;
@@ -16,7 +16,7 @@ declare module "node_modules/ol3-fun/ol3-fun/common" {
     export function range(n: number): number[];
     export function shuffle<T>(array: T[]): T[];
 }
-declare module "node_modules/ol3-fun/ol3-fun/navigation" {
+declare module "ol3-fun/ol3-fun/navigation" {
     import * as ol from "openlayers";
     export function zoomToFeature(map: ol.Map, feature: ol.Feature, options?: {
         duration?: number;
@@ -24,42 +24,8 @@ declare module "node_modules/ol3-fun/ol3-fun/navigation" {
         minResolution?: number;
     }): JQuery.Deferred<any, any, any>;
 }
-declare module "ol3-input/providers/osm" {
-    export module OpenStreet {
-        interface Address {
-            road: string;
-            state: string;
-            country: string;
-        }
-        interface Address {
-            neighbourhood: string;
-            postcode: string;
-            city: string;
-            town: string;
-        }
-        interface Address {
-            peak: string;
-            county: string;
-            country_code: string;
-            sports_centre: string;
-        }
-        interface ResponseItem {
-            place_id: string;
-            licence: string;
-            osm_type: string;
-            osm_id: string;
-            boundingbox: string[];
-            lat: string;
-            lon: string;
-            display_name: string;
-            class: string;
-            type: string;
-            importance: number;
-            icon: string;
-            address: Address;
-        }
-        type Response = ResponseItem[];
-    }
+declare module "ol3-input/ol3-input/providers/osm" {
+    import { Response } from "./@types/osm";
     export interface Result<T> {
         lon: number;
         lat: number;
@@ -90,16 +56,16 @@ declare module "ol3-input/providers/osm" {
                 addressdetails: number;
                 limit: number;
                 countrycodes: string;
-                'accept-language': string;
+                "accept-language": string;
             };
         };
-        handleResponse(args: OpenStreet.Response): Result<OpenStreet.ResponseItem>[];
+        handleResponse(args: Response): Result<import("../ol3-input/providers/@types/osm").ResponseItem>[];
     }
 }
-declare module "ol3-input/ol3-input" {
+declare module "ol3-input/ol3-input/ol3-input" {
     import ol = require("openlayers");
     import { olx } from "openlayers";
-    import { OpenStreet } from "ol3-input/providers/osm";
+    import { OpenStreet } from "ol3-input/ol3-input/providers/osm";
     export interface InputOptions extends olx.control.ControlOptions {
         map?: ol.Map;
         className?: string;
@@ -142,4 +108,9 @@ declare module "ol3-input/ol3-input" {
             value: string;
         }) => void): (ol.EventsKey | ol.EventsKey[]);
     }
+}
+declare module "ol3-input/index" {
+    import { Input, InputOptions } from "ol3-input/ol3-input/ol3-input";
+    import { OpenStreet as OsmSearchProvider, Result as OsmSearchResult } from "ol3-input/ol3-input/providers/osm";
+    export { Input, InputOptions, OsmSearchProvider, OsmSearchResult };
 }

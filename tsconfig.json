@@ -10,7 +10,5 @@
         "sourceMap": true,
         "target": "es5"
     },
-    "include": [
-        "ol3-input/**/*.ts"
-    ]
+    "include": ["index.ts", "ol3-input/**/*.ts"]
 }

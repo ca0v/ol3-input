@@ -8,11 +8,9 @@
         "noImplicitAny": true,
         "sourceMap": true,
         "rootDir": "../",
-        "outFile": "../built/tests/spec/index.js",
-        "moduleResolution": "node",
+        "outFile": "../built/tests.max.js",
+        "moduleResolution": "classic",
         "baseUrl": "../node_modules"
     },
-    "include": [
-        "index.ts"
-    ]
+    "include": ["index.ts"]
 }

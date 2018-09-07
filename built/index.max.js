@@ -11,7 +11,7 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-define("node_modules/ol3-fun/ol3-fun/common", ["require", "exports"], function (require, exports) {
+define("ol3-fun/ol3-fun/common", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     function uuid() {
@@ -177,7 +177,7 @@ define("node_modules/ol3-fun/ol3-fun/common", ["require", "exports"], function (
     }
     exports.shuffle = shuffle;
 });
-define("node_modules/ol3-fun/ol3-fun/navigation", ["require", "exports", "openlayers", "jquery", "node_modules/ol3-fun/ol3-fun/common"], function (require, exports, ol, $, common_1) {
+define("ol3-fun/ol3-fun/navigation", ["require", "exports", "openlayers", "jquery", "ol3-fun/ol3-fun/common"], function (require, exports, ol, $, common_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     function zoomToFeature(map, feature, options) {
@@ -223,22 +223,22 @@ define("node_modules/ol3-fun/ol3-fun/navigation", ["require", "exports", "openla
     }
     exports.zoomToFeature = zoomToFeature;
 });
-define("ol3-input/providers/osm", ["require", "exports"], function (require, exports) {
+define("ol3-input/ol3-input/providers/osm", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var OpenStreet = (function () {
         function OpenStreet() {
-            this.dataType = 'json';
-            this.method = 'GET';
+            this.dataType = "json";
+            this.method = "GET";
             this.settings = {
-                url: '//nominatim.openstreetmap.org/search/',
+                url: "//nominatim.openstreetmap.org/search/",
                 params: {
-                    q: '',
-                    format: 'json',
+                    q: "",
+                    format: "json",
                     addressdetails: 1,
                     limit: 10,
-                    countrycodes: '',
-                    'accept-language': 'en-US'
+                    countrycodes: "",
+                    "accept-language": "en-US"
                 }
             };
         }
@@ -247,34 +247,36 @@ define("ol3-input/providers/osm", ["require", "exports"], function (require, exp
                 url: this.settings.url,
                 params: {
                     q: options.query,
-                    format: 'json',
+                    format: "json",
                     addressdetails: 1,
                     limit: options.limit || this.settings.params.limit,
                     countrycodes: options.countrycodes || this.settings.params.countrycodes,
-                    'accept-language': options.lang || this.settings.params['accept-language']
+                    "accept-language": options.lang || this.settings.params["accept-language"]
                 }
             };
         };
         OpenStreet.prototype.handleResponse = function (args) {
-            return args.sort(function (v) { return v.importance || 1; }).map(function (result) { return ({
-                original: result,
-                lon: parseFloat(result.lon),
-                lat: parseFloat(result.lat),
-                address: {
-                    name: result.address.neighbourhood || '',
-                    road: result.address.road || '',
-                    postcode: result.address.postcode,
-                    city: result.address.city || result.address.town,
-                    state: result.address.state,
-                    country: result.address.country
-                }
-            }); });
+            return args.sort(function (v) { return v.importance || 1; }).map(function (result) {
+                return ({
+                    original: result,
+                    lon: parseFloat(result.lon),
+                    lat: parseFloat(result.lat),
+                    address: {
+                        name: result.address.neighbourhood || "",
+                        road: result.address.road || "",
+                        postcode: result.address.postcode,
+                        city: result.address.city || result.address.town,
+                        state: result.address.state,
+                        country: result.address.country
+                    }
+                });
+            });
         };
         return OpenStreet;
     }());
     exports.OpenStreet = OpenStreet;
 });
-define("ol3-input/ol3-input", ["require", "exports", "openlayers", "jquery", "node_modules/ol3-fun/ol3-fun/common", "node_modules/ol3-fun/ol3-fun/common", "node_modules/ol3-fun/ol3-fun/navigation", "ol3-input/providers/osm"], function (require, exports, ol, $, common_2, common_3, navigation_1, osm_1) {
+define("ol3-input/ol3-input/ol3-input", ["require", "exports", "openlayers", "jquery", "ol3-fun/ol3-fun/common", "ol3-fun/ol3-fun/common", "ol3-fun/ol3-fun/navigation", "ol3-input/ol3-input/providers/osm"], function (require, exports, ol, $, common_2, common_3, navigation_1, osm_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var olcss = {
@@ -508,5 +510,11 @@ define("ol3-input/ol3-input", ["require", "exports", "openlayers", "jquery", "no
         return Input;
     }(ol.control.Control));
     exports.Input = Input;
+});
+define("ol3-input/index", ["require", "exports", "ol3-input/ol3-input/ol3-input", "ol3-input/ol3-input/providers/osm"], function (require, exports, ol3_input_1, osm_2) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.Input = ol3_input_1.Input;
+    exports.OsmSearchProvider = osm_2.OpenStreet;
 });
 //# sourceMappingURL=index.max.js.map

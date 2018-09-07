@@ -2,7 +2,7 @@ import "./ol3-input";
 
 export function run() {
     let l = window.location;
-    let path = `${l.origin}${l.pathname}?run=examples/`;
+    let path = `${l.origin}${l.pathname}?run=ol3-input/examples/`;
     let labs = `
     index
     ol3-input
@@ -22,14 +22,11 @@ export function run() {
 
     let html = labs
         .split(/ /)
-        .map(v => v.trim())
-        .filter(v => !!v)
+        .map((v) => v.trim())
+        .filter((v) => !!v)
         //.sort()
-        .map(lab => `<div class='test'><a href='${path}${lab}&debug=0'>${lab}</a></div>`)
+        .map((lab) => `<div class='test'><a href='${path}${lab}&debug=0'>${lab}</a></div>`)
         .join("\n");
 
-
-    html += `<a href='${l.origin}${l.pathname}?run=ol3-input/tests/index'>tests</a>`;
-
     document.write(html);
-};
+}
