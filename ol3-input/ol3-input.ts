@@ -2,8 +2,8 @@ import ol = require("openlayers");
 import { olx } from "openlayers";
 import $ = require("jquery");
 
-import { cssin, mixin, debounce } from "ol3-fun/ol3-fun/common";
-import { pair, range } from "ol3-fun/ol3-fun/common";
+import { cssin, mixin, debounce } from "ol3-fun/index";
+import { pair, range } from "ol3-fun/index";
 import { zoomToFeature } from "ol3-fun/ol3-fun/navigation";
 import { OpenStreet } from "./providers/osm";
 

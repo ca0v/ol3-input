@@ -1,16 +1,8 @@
 {
-    "compilerOptions": {
-        "allowJs": false,
-        "removeComments": true,
-        "declaration": false,
-        "module": "amd",
-        "target": "es5",
-        "noImplicitAny": true,
-        "sourceMap": true,
-        "rootDir": "../",
-        "outFile": "../built/tests.max.js",
-        "moduleResolution": "classic",
-        "baseUrl": "../node_modules"
-    },
-    "include": ["index.ts"]
+	"extends": "../tsconfig.json",
+	"compilerOptions": {
+		"declaration": false,
+		"outFile": "../built/tests.max.js"
+	},
+	"include": ["index.ts"]
 }
