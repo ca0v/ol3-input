@@ -439,6 +439,10 @@ define("node_modules/ol3-fun/ol3-fun/is-cyclic", ["require", "exports", "node_mo
 define("node_modules/ol3-fun/ol3-fun/deep-extend", ["require", "exports", "node_modules/ol3-fun/ol3-fun/is-cyclic", "node_modules/ol3-fun/ol3-fun/is-primitive"], function (require, exports, is_cyclic_1, is_primitive_2) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    function isArrayLike(o) {
+        var keys = Object.keys(o);
+        return keys.every(function (k) { return k === parseInt(k, 10).toString(); });
+    }
     function extend(a, b, trace, history) {
         if (history === void 0) { history = []; }
         if (!b) {
@@ -481,7 +485,6 @@ define("node_modules/ol3-fun/ol3-fun/deep-extend", ["require", "exports", "node_
             if (this.traceItems) {
                 this.traceItems.push(item);
             }
-            return item.path;
         };
         Merger.prototype.deepExtend = function (target, source, path) {
             var _this = this;
@@ -505,9 +508,11 @@ define("node_modules/ol3-fun/ol3-fun/deep-extend", ["require", "exports", "node_
                 return target;
             }
             else if (isArray(target)) {
-                throw "attempting to merge a non-array into an array";
+                if (!isArrayLike(source)) {
+                    throw "attempting to merge a non-array into an array";
+                }
             }
-            Object.keys(source).forEach(function (k) { return _this.mergeChild(k, target, source[k], [k].concat(path)); });
+            Object.keys(source).forEach(function (k) { return _this.mergeChild(k, target, source[k], path.slice()); });
             return target;
         };
         Merger.prototype.cloneArray = function (val, path) {
@@ -541,7 +546,8 @@ define("node_modules/ol3-fun/ol3-fun/deep-extend", ["require", "exports", "node_
             if (sourceValue === targetValue)
                 return;
             if (is_primitive_2.isPrimitive(sourceValue)) {
-                path = this.trace({
+                path.push(key);
+                this.trace({
                     path: path,
                     key: key,
                     target: target,
@@ -553,7 +559,8 @@ define("node_modules/ol3-fun/ol3-fun/deep-extend", ["require", "exports", "node_
             }
             if (canClone(sourceValue)) {
                 sourceValue = clone(sourceValue);
-                path = this.trace({
+                path.push(key);
+                this.trace({
                     path: path,
                     key: key,
                     target: target,
@@ -565,11 +572,12 @@ define("node_modules/ol3-fun/ol3-fun/deep-extend", ["require", "exports", "node_
             }
             if (isArray(sourceValue)) {
                 if (isArray(targetValue)) {
-                    this.deepExtend(targetValue, sourceValue, path);
+                    this.deepExtendWithKey(targetValue, sourceValue, path, key);
                     return;
                 }
                 sourceValue = this.cloneArray(sourceValue, path);
-                path = this.trace({
+                path.push(key);
+                this.trace({
                     path: path,
                     key: key,
                     target: target,
@@ -585,7 +593,8 @@ define("node_modules/ol3-fun/ol3-fun/deep-extend", ["require", "exports", "node_
             if (!isHash(targetValue)) {
                 var merger = new Merger(null, this.history);
                 sourceValue = merger.deepExtend({}, sourceValue, path);
-                path = this.trace({
+                path.push(key);
+                this.trace({
                     path: path,
                     key: key,
                     target: target,
@@ -595,8 +604,14 @@ define("node_modules/ol3-fun/ol3-fun/deep-extend", ["require", "exports", "node_
                 target[key] = sourceValue;
                 return;
             }
-            this.deepExtend(targetValue, sourceValue, path);
+            this.deepExtendWithKey(targetValue, sourceValue, path, key);
             return;
+        };
+        Merger.prototype.deepExtendWithKey = function (targetValue, sourceValue, path, key) {
+            var index = path.push(key);
+            this.deepExtend(targetValue, sourceValue, path);
+            if (index === path.length)
+                path.pop();
         };
         Merger.prototype.mergeArray = function (key, target, source, path) {
             var _this = this;
@@ -619,14 +634,14 @@ define("node_modules/ol3-fun/ol3-fun/deep-extend", ["require", "exports", "node_
                     if (isHash(target[i]) && !!target[i][key]) {
                         throw "cannot replace an identified array item with a non-identified array item";
                     }
-                    _this.mergeChild(i, target, sourceItem, path);
+                    _this.mergeChild(i, target, sourceItem, path.slice());
                     return;
                 }
                 if (isUndefined(targetIndex)) {
-                    _this.mergeChild(target.length, target, sourceItem, path);
+                    _this.mergeChild(target.length, target, sourceItem, path.slice());
                     return;
                 }
-                _this.mergeChild(targetIndex, target, sourceItem, path);
+                _this.mergeChild(targetIndex, target, sourceItem, path.slice());
                 return;
             });
             return target;
@@ -634,7 +649,45 @@ define("node_modules/ol3-fun/ol3-fun/deep-extend", ["require", "exports", "node_
         return Merger;
     }());
 });
-define("node_modules/ol3-fun/index", ["require", "exports", "node_modules/ol3-fun/ol3-fun/common", "node_modules/ol3-fun/ol3-fun/css", "node_modules/ol3-fun/ol3-fun/navigation", "node_modules/ol3-fun/ol3-fun/parse-dms", "node_modules/ol3-fun/ol3-fun/slowloop", "node_modules/ol3-fun/ol3-fun/deep-extend"], function (require, exports, common_2, css_1, navigation_1, parse_dms_1, slowloop_1, deep_extend_1) {
+define("node_modules/ol3-fun/ol3-fun/extensions", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    var Extensions = (function () {
+        function Extensions() {
+            this.hash = new WeakMap(null);
+        }
+        Extensions.prototype.isExtended = function (o) {
+            return this.hash.has(o);
+        };
+        Extensions.prototype.extend = function (o, ext) {
+            var hashData = this.hash.get(o);
+            if (!hashData) {
+                hashData = {};
+                this.hash.set(o, hashData);
+            }
+            ext && Object.keys(ext).forEach(function (k) { return (hashData[k] = ext[k]); });
+            return hashData;
+        };
+        Extensions.prototype.bind = function (o1, o2) {
+            if (this.isExtended(o1)) {
+                if (this.isExtended(o2)) {
+                    if (this.hash.get(o1) === this.hash.get(o2))
+                        return;
+                    throw "both objects already bound";
+                }
+                else {
+                    this.hash.set(o2, this.extend(o1));
+                }
+            }
+            else {
+                this.hash.set(o1, this.extend(o2));
+            }
+        };
+        return Extensions;
+    }());
+    exports.Extensions = Extensions;
+});
+define("node_modules/ol3-fun/index", ["require", "exports", "node_modules/ol3-fun/ol3-fun/common", "node_modules/ol3-fun/ol3-fun/css", "node_modules/ol3-fun/ol3-fun/navigation", "node_modules/ol3-fun/ol3-fun/parse-dms", "node_modules/ol3-fun/ol3-fun/slowloop", "node_modules/ol3-fun/ol3-fun/deep-extend", "node_modules/ol3-fun/ol3-fun/extensions"], function (require, exports, common_2, css_1, navigation_1, parse_dms_1, slowloop_1, deep_extend_1, extensions_1) {
     "use strict";
     var index = {
         asArray: common_2.asArray,
@@ -662,7 +715,8 @@ define("node_modules/ol3-fun/index", ["require", "exports", "node_modules/ol3-fu
         },
         navigation: {
             zoomToFeature: navigation_1.zoomToFeature
-        }
+        },
+        Extensions: extensions_1.Extensions
     };
     return index;
 });

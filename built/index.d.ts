@@ -62,6 +62,14 @@ declare module "node_modules/ol3-fun/ol3-fun/deep-extend" {
     type Path = Array<any>;
     export function extend<A extends object>(a: A, b?: Partial<A>, trace?: Array<TraceItem>, history?: History): A;
 }
+declare module "node_modules/ol3-fun/ol3-fun/extensions" {
+    export class Extensions {
+        private hash;
+        isExtended(o: any): boolean;
+        extend<T extends object, U extends any>(o: T, ext?: U): U;
+        bind(o1: any, o2: any): void;
+    }
+}
 declare module "node_modules/ol3-fun/index" {
     import { asArray, debounce, defaults, doif, getParameterByName, getQueryParameters, html, mixin, pair, parse, range, shuffle, toggle, uuid } from "node_modules/ol3-fun/ol3-fun/common";
     import { cssin, loadCss } from "node_modules/ol3-fun/ol3-fun/css";
@@ -69,6 +77,7 @@ declare module "node_modules/ol3-fun/index" {
     import { parse as dmsParse } from "node_modules/ol3-fun/ol3-fun/parse-dms";
     import { slowloop } from "node_modules/ol3-fun/ol3-fun/slowloop";
     import { extend as deepExtend } from "node_modules/ol3-fun/ol3-fun/deep-extend";
+    import { Extensions } from "node_modules/ol3-fun/ol3-fun/extensions";
     let index: {
         asArray: typeof asArray;
         cssin: typeof cssin;
@@ -102,6 +111,7 @@ declare module "node_modules/ol3-fun/index" {
         navigation: {
             zoomToFeature: typeof zoomToFeature;
         };
+        Extensions: typeof Extensions;
     };
     export = index;
 }
